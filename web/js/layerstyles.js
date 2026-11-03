@@ -92,7 +92,9 @@ export function buildLayers(sampleFilter = null) {
       ...sampleOnly,
       paint: {
         'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 4, 7, 16],
-        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.6, 7, 1.5],
+        // baixa em zoom pequeno: sem agregacao no tile (fallback GDAL), todos os ~127 mil
+        // pontos entram no mapa de calor e uma intensidade alta satura tudo
+        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.01, 3, 0.03, 5, 0.15, 7, 0.6],
         'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
           0, 'rgba(226,85,45,0)', 0.2, 'rgba(226,85,45,0.35)', 0.5, '#e2552d', 1, '#ffe08a'],
         // some ao aproximar, quando entram os pontos individuais
