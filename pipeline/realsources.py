@@ -18,7 +18,7 @@ Decisoes (ver README, "Fontes de dados"):
 - GEOROC: um `Source` por CSV (cp1252); so analises de rocha total ("WR"),
   uma linha por amostra (SAMPLE NAME + CITATIONS), caixa de coordenadas vira
   centro + incerteza; sem coordenada nao e geocodificada aqui. O mapeamento
-  de rochas (`rock_mapping_v3.csv`) tambem nao entra no hash: mudou, `--force`.
+  de rochas (`rock_mapping_v4.csv`) tambem nao entra no hash: mudou, `--force`.
 """
 import json
 import re
@@ -45,7 +45,7 @@ from pipeline.tectonics import DEFAULT_BUFFER_KM, rank_zones
 ACQUISITION_DATE = "2026-11-03"
 ROOT = Path(__file__).resolve().parent.parent
 MAPPING_V2 = ROOT / "data" / "curated" / "rock_mapping_v2.csv"
-MAPPING_V3 = ROOT / "data" / "curated" / "rock_mapping_v3.csv"
+MAPPING_CSV = ROOT / "data" / "curated" / "rock_mapping_v4.csv"  # v3 + nomes com xenolito (decisao do usuario)
 
 GVP_FILE = "gvp/holocene_volcanoes.geojson"
 USGS_FILE = "usgs/m6_1900_2026-11-03.csv"
@@ -282,11 +282,11 @@ def load_georoc(path: Path, source_id: str | None = None,
     Ordem: linhas de rodape (sem UNIQUE_ID: abreviacoes e referencias) saem;
     so MATERIAL 'WR' (rocha total) fica; uma linha por amostra (SAMPLE NAME +
     CITATIONS, a primeira do arquivo); coordenadas (ver `georoc_coordinates`);
-    classe pelo mapeamento v3 (nome sem a etiqueta final de citacao).
+    classe pelo mapeamento v4 (nome sem a etiqueta final de citacao).
     """
     path = Path(path)
     source_id = source_id or f"georoc:{path.stem}"
-    mapping = load_mapping(MAPPING_V3) if mapping is None else mapping
+    mapping = load_mapping(MAPPING_CSV) if mapping is None else mapping
     df = pd.read_csv(path, encoding="cp1252", dtype=str, keep_default_na=False,
                      low_memory=False, usecols=GEOROC_COLUMNS)
     df = df.astype("object")

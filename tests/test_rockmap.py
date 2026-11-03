@@ -104,3 +104,28 @@ def test_v3_has_the_expected_examples_and_excludes_xenoliths():
     assert v3["lherzolite, spinel"] == "ultramafic"
     assert "peridotite, xenolith" not in v3 and "lherzolite, spinel, xenolith" not in v3
     assert "basalt, olivine / gabbro" not in v3
+
+
+# --- mapeamento v4 (v3 + nomes com xenolito; decisao do usuario em 2026-11-03) -
+
+CSV_V4 = CSV.with_name("rock_mapping_v4.csv")
+
+
+def test_v4_keeps_every_v3_row_and_adds_only_xenolith_names_with_the_root_class():
+    v3, v4 = load_mapping(CSV_V3), load_mapping(CSV_V4)
+    assert {k: v4.get(k) for k in v3} == v3
+    added = {k: c for k, c in v4.items() if k not in v3}
+    assert len(added) > 100
+    for name, cls in added.items():
+        root = name.partition(",")[0].strip()
+        assert "xenolith" in name, name
+        assert " / " not in name and "[" not in name, name
+        assert v3.get(root) == cls, name          # classe = a da raiz, ja mapeada no v3
+
+
+def test_v4_has_the_expected_xenolith_examples():
+    v4 = load_mapping(CSV_V4)
+    assert v4["lherzolite, spinel, xenolith"] == "ultramafic"
+    assert v4["peridotite, xenolith"] == "ultramafic"
+    assert v4["harzburgite, xenolith"] == "ultramafic"
+    assert "dunite, xenolith / dunite" not in v4
