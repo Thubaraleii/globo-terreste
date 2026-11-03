@@ -65,6 +65,20 @@ def _feature_collection(gdf) -> dict:
     return {"type": "FeatureCollection", "features": features}
 
 
+def _with_unit_lith_class(samples, units):
+    """Copia de `samples` com `unit_lith_class` (lith_class da unidade pelo
+    `unit_id`; nulo sem unidade, unidade ausente ou lith_class nulo). So para
+    exportar: alimenta o filtro "amostras desta litologia" da web."""
+    lookup = (
+        units.dropna(subset=["unit_id"])
+        .drop_duplicates(subset="unit_id")
+        .set_index("unit_id")["lith_class"]
+    )
+    out = samples.copy()
+    out["unit_lith_class"] = out["unit_id"].map(lookup).astype(object)
+    return out
+
+
 def _write_geojson(gdf, path: Path) -> None:
     text = json.dumps(_feature_collection(gdf), ensure_ascii=False, allow_nan=False)
     Path(path).write_text(text, encoding="utf-8")
@@ -104,6 +118,8 @@ def export_web(gpkg: Path, out_dir: Path, tippecanoe: str | None,
                 if len(gdf) == 0:
                     result.warnings.append(f"camada {layer} vazia: {layer}.pmtiles nao gerado")
                     continue
+                if layer == "samples":
+                    gdf = _with_unit_lith_class(gdf, read_dataframe(gpkg, layer="geo_units"))
                 source = Path(tmp) / f"{layer}.geojson"
                 _write_geojson(gdf, source)
                 run(

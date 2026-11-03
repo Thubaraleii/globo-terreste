@@ -7,6 +7,7 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import pytest
+from pyogrio import read_dataframe
 from shapely.geometry import LineString, Point, box
 
 from pipeline import export
@@ -149,6 +150,36 @@ def test_tippecanoe_input_is_the_layer_as_geojson(tmp_path):
     export_web(_gpkg(tmp_path), tmp_path / "web", tippecanoe="tippecanoe", run=run)
     assert seen["samples"]["features"][0]["properties"]["id"] == "s1"
     assert seen["geo_units"]["features"][0]["properties"]["unit_id"] == "u1"
+
+
+def test_samples_tiles_carry_unit_lith_class(tmp_path):
+    g = tmp_path / "geoworld.gpkg"
+    create_geopackage(g)
+    write_layer(g, "geo_units", gpd.GeoDataFrame(
+        {"unit_id": ["u1", "u2"], "lith_class": ["granite", None], "source_id": ["glim"] * 2},
+        geometry=[box(0, 0, 1, 1), box(2, 0, 3, 1)], crs=CRS,
+    ))
+    write_layer(g, "samples", gpd.GeoDataFrame(
+        {"id": ["s1", "s2", "s3", "s4"], "unit_id": ["u1", None, "u2", "u9"],
+         "source_id": ["s"] * 4},
+        geometry=[Point(0.5, 0.5), Point(9, 9), Point(2.5, 0.5), Point(8, 8)], crs=CRS,
+    ))
+    seen = {}
+
+    def run(cmd, **kwargs):
+        seen[cmd[cmd.index("-l") + 1]] = _read(Path(cmd[-1]))
+        Path(cmd[cmd.index("-o") + 1]).write_bytes(b"")
+        return subprocess.CompletedProcess(cmd, 0)
+
+    export_web(g, tmp_path / "web", tippecanoe="tippecanoe", run=run)
+    props = {f["properties"]["id"]: f["properties"] for f in seen["samples"]["features"]}
+    assert props["s1"]["unit_lith_class"] == "granite"
+    assert props["s2"]["unit_lith_class"] is None   # unit_id nulo
+    assert props["s3"]["unit_lith_class"] is None   # lith_class nulo
+    assert props["s4"]["unit_lith_class"] is None   # unidade inexistente
+    assert "unit_lith_class" not in seen["geo_units"]["features"][0]["properties"]
+    # o gpkg nao muda
+    assert "unit_lith_class" not in read_dataframe(g, layer="samples").columns
 
 
 def test_empty_pmtiles_layer_is_skipped_with_warning(tmp_path):
