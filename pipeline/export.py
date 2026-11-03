@@ -79,6 +79,16 @@ def _with_unit_lith_class(samples, units):
     return out
 
 
+def _with_sample_count(units, samples):
+    """Copia de `units` com `sample_count` (int, nunca nulo): quantas amostras
+    tem aquele `unit_id`. So para exportar: o painel da unidade precisa da
+    contagem exata, que o navegador nao calcula a partir dos tiles."""
+    counts = samples["unit_id"].dropna().value_counts()
+    out = units.copy()
+    out["sample_count"] = out["unit_id"].map(counts).fillna(0).astype("int64")
+    return out
+
+
 def _write_geojson(gdf, path: Path) -> None:
     text = json.dumps(_feature_collection(gdf), ensure_ascii=False, allow_nan=False)
     Path(path).write_text(text, encoding="utf-8")
@@ -118,6 +128,11 @@ def export_web(gpkg: Path, out_dir: Path, tippecanoe: str | None,
                 if len(gdf) == 0:
                     result.warnings.append(f"camada {layer} vazia: {layer}.pmtiles nao gerado")
                     continue
+                if layer == "geo_units":
+                    # so atributos: contar nao exige decodificar geometrias
+                    samples = read_dataframe(gpkg, layer="samples", columns=["unit_id"],
+                                             read_geometry=False)
+                    gdf = _with_sample_count(gdf, samples)
                 if layer == "samples":
                     # so atributos: nao decodificar milhoes de poligonos do GLiM
                     units = read_dataframe(gpkg, layer="geo_units",

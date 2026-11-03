@@ -182,6 +182,44 @@ def test_samples_tiles_carry_unit_lith_class(tmp_path):
     assert "unit_lith_class" not in read_dataframe(g, layer="samples").columns
 
 
+def _capture_run(seen):
+    def run(cmd, **kwargs):
+        seen[cmd[cmd.index("-l") + 1]] = _read(Path(cmd[-1]))
+        Path(cmd[cmd.index("-o") + 1]).write_bytes(b"")
+        return subprocess.CompletedProcess(cmd, 0)
+    return run
+
+
+def test_geo_units_tiles_carry_sample_count(tmp_path):
+    g = tmp_path / "geoworld.gpkg"
+    create_geopackage(g)
+    write_layer(g, "geo_units", gpd.GeoDataFrame(
+        {"unit_id": ["u1", "u2"], "lith_class": ["granite", "basalt"], "source_id": ["glim"] * 2},
+        geometry=[box(0, 0, 1, 1), box(2, 0, 3, 1)], crs=CRS,
+    ))
+    write_layer(g, "samples", gpd.GeoDataFrame(
+        {"id": ["s1", "s2", "s3", "s4"], "unit_id": ["u1", "u1", None, "u9"],
+         "source_id": ["s"] * 4},
+        geometry=[Point(0.5, 0.5), Point(0.2, 0.2), Point(9, 9), Point(8, 8)], crs=CRS,
+    ))
+    seen = {}
+    export_web(g, tmp_path / "web", tippecanoe="tippecanoe", run=_capture_run(seen))
+    props = {f["properties"]["unit_id"]: f["properties"] for f in seen["geo_units"]["features"]}
+    assert props["u1"]["sample_count"] == 2 and type(props["u1"]["sample_count"]) is int
+    assert props["u2"]["sample_count"] == 0 and type(props["u2"]["sample_count"]) is int
+    assert "sample_count" not in seen["samples"]["features"][0]["properties"]
+    assert "sample_count" not in read_dataframe(g, layer="geo_units").columns
+    assert seen["geo_units"]["features"][0]["geometry"]["type"] == "Polygon"
+
+
+def test_sample_count_zero_when_samples_empty(tmp_path):
+    seen = {}
+    export_web(_gpkg(tmp_path, with_samples=False), tmp_path / "web",
+               tippecanoe="tippecanoe", run=_capture_run(seen))
+    counts = [f["properties"]["sample_count"] for f in seen["geo_units"]["features"]]
+    assert counts == [0] and type(counts[0]) is int
+
+
 def test_unit_lith_class_all_null_when_geo_units_empty(tmp_path):
     seen = {}
 
