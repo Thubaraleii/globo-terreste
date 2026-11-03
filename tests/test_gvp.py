@@ -20,6 +20,7 @@ def test_normalize_gvp_keeps_original_name_and_coords(gvp):
     row = gvp[gvp["name"] == "Vulcao Sintetico Alfa"].iloc[0]
     assert row["country"] == "Pais Ficticio A"
     assert row["type"] == "Stratovolcano"
+    assert row["last_eruption"] == "1850"
     assert row["kind"] == "volcano"
     assert row["source_id"] == "gvp"
     assert pd.isna(row["reference"])
@@ -80,7 +81,7 @@ def test_load_hotspots_rejects_bad_coords(tmp_path, row):
 
 def test_normalize_gvp_drops_bad_coords_and_counts():
     df = pd.DataFrame({
-        "Volcano Name": ["ok", "texto", "lat95", "lon200", "inf", "nan"],
+        "Volcano_Name": ["ok", "texto", "lat95", "lon200", "inf", "nan"],
         "Latitude": ["10", "abc", "95", "10", "inf", "nan"],
         "Longitude": ["20", "20", "20", "200", "20", "20"],
     })
@@ -92,3 +93,17 @@ def test_normalize_gvp_drops_bad_coords_and_counts():
 def test_shipped_hotspot_list_has_no_rows():
     shipped = Path(__file__).parent.parent / "data" / "curated" / "hotspots.csv"
     assert len(load_hotspots(shipped, "curated")) == 0
+
+
+def test_normalize_gvp_numeric_last_eruption_becomes_text():
+    """O WFS do GVP entrega Last_Eruption_Year como inteiro (negativo = AEC) ou nulo."""
+    df = pd.DataFrame({
+        "Volcano_Name": ["a", "b", "c"],
+        "Last_Eruption_Year": pd.array([-8300, None, 2024], dtype="Int64"),
+        "Latitude": [1.0, 2.0, 3.0],
+        "Longitude": [4.0, 5.0, 6.0],
+    })
+    out = normalize_gvp(df, "gvp")
+    assert out["last_eruption"].tolist()[0] == "-8300"
+    assert pd.isna(out["last_eruption"].tolist()[1])
+    assert out["last_eruption"].tolist()[2] == "2024"

@@ -1,5 +1,5 @@
-Volcano Number,Volcano Name,Country,Primary Volcano Type,Last Known Eruption,Latitude,Longitude
-000001,Vulcao Sintetico Alfa,Pais Ficticio A,Stratovolcano,1850 CE,10.5,20.25
+Volcano_Number,Volcano_Name,Country,Primary_Volcano_Type,Last_Eruption_Year,Latitude,Longitude
+000001,Vulcao Sintetico Alfa,Pais Ficticio A,Stratovolcano,1850,10.5,20.25
 000002,Vulcao Sintetico Beta,Pais Ficticio B,Shield,,-15.75,-60.5
-000003,Vulcao Sintetico Gama,Pais Ficticio A,Caldera,2001 BCE,,
-000004,Vulcao Sintetico Delta,Pais Ficticio C,Lava dome,1990 CE,35.0,140.125
+000003,Vulcao Sintetico Gama,Pais Ficticio A,Caldera,-2001,,
+000004,Vulcao Sintetico Delta,Pais Ficticio C,Lava dome,1990,35.0,140.125

@@ -11,13 +11,15 @@ import pandas as pd
 from pipeline.common.geom import to_wgs84
 from pipeline.common.model import CRS, SCHEMAS
 
-# PROVISORIO: cabecalhos modelados na exportacao Holocene do GVP; confirmar
-# contra o arquivo real quando ele for inspecionado. original -> spec.
+# Propriedades do GeoJSON do WFS do GVP (camada
+# GVP-VOTW:Smithsonian_VOTW_Holocene_Volcanoes), conferidas no arquivo baixado
+# em 2026-11-03. original -> spec. `Last_Eruption_Year` e inteiro (negativo =
+# antes da era comum) ou nulo; vira texto em `last_eruption` ("-8300").
 GVP_COLUMNS = {
-    "Volcano Name": "name",
+    "Volcano_Name": "name",
     "Country": "country",
-    "Primary Volcano Type": "type",
-    "Last Known Eruption": "last_eruption",
+    "Primary_Volcano_Type": "type",
+    "Last_Eruption_Year": "last_eruption",
     "Latitude": "lat",
     "Longitude": "lon",
 }
@@ -52,6 +54,19 @@ def _build(df: pd.DataFrame, kind: str, source_id: str) -> gpd.GeoDataFrame:
     return gdf[_COLS].reset_index(drop=True)
 
 
+def _year_text(v):
+    """Ano como texto ("-8300"); inteiro guardado como float vira "1850", nao "1850.0"."""
+    if v is None or (not isinstance(v, str) and pd.isna(v)):
+        return None
+    if isinstance(v, float) and v.is_integer():
+        v = int(v)
+    if hasattr(v, "item"):  # escalares numpy
+        v = v.item()
+        if isinstance(v, float) and v.is_integer():
+            v = int(v)
+    return str(v)
+
+
 def normalize_gvp(df: pd.DataFrame, source_id: str) -> gpd.GeoDataFrame:
     """Normaliza a lista GVP. Linhas sem coordenadas sao descartadas e a
     contagem fica em `gdf.attrs["dropped_no_coords"]`. Campos vazios ficam nulos."""
@@ -61,6 +76,8 @@ def normalize_gvp(df: pd.DataFrame, source_id: str) -> gpd.GeoDataFrame:
     keep = _valid_coords(lon, lat)
     kept = renamed[keep].copy()
     kept["lon"], kept["lat"] = lon[keep], lat[keep]
+    if "last_eruption" in kept.columns:
+        kept["last_eruption"] = kept["last_eruption"].astype("object").map(_year_text)
     gdf = _build(kept, "volcano", source_id)
     gdf.attrs["dropped_no_coords"] = int((~keep).sum())
     return gdf
