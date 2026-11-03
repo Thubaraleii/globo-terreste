@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>GeoWorld</title>
+  <link rel="stylesheet" href="vendor/maplibre-gl.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main id="map" aria-label="Globo interativo"></main>
+
+  <button id="panel-toggle" type="button" aria-controls="layer-panel" aria-expanded="false">Camadas</button>
+
+  <aside id="layer-panel" aria-label="Painel de camadas">
+    <h1>GeoWorld</h1>
+    <h2>Camadas</h2>
+    <ul class="layer-list"></ul>
+    <div class="basemap-box">
+      <label for="basemap-select">Mapa de fundo</label>
+      <select id="basemap-select" class="basemap-select"></select>
+    </div>
+    <p id="layer-warnings" class="warnings" role="status"></p>
+  </aside>
+
+  <script src="vendor/maplibre-gl.js"></script>
+  <script src="vendor/pmtiles.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
