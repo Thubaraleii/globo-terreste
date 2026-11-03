@@ -1,0 +1,275 @@
+{
+  "gvp": {
+    "url": "https://webservices.volcano.si.edu/geoserver/GVP-VOTW/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=GVP-VOTW:Smithsonian_VOTW_Holocene_Volcanoes&outputFormat=application/json",
+    "file": "holocene_volcanoes.geojson",
+    "sha256": "0da737f548b6db8c846447c3549b5620db5e9ca9bf698fd6c0baeea440e194f9",
+    "license": "Termos de uso próprios do GVP (ver volcano.si.edu); citação obrigatória",
+    "downloaded_at": "2026-11-03T23:01:06.080605+00:00"
+  },
+  "pb2002": {
+    "url": "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json",
+    "file": "boundaries.json",
+    "sha256": "42b3e0876a7e40f133e958ba7ab85f8851b5c693a046fbc3b138e7751863d92a",
+    "license": "Open Data Commons Attribution License 1.0",
+    "downloaded_at": "2026-11-03T23:01:06.082204+00:00"
+  },
+  "usgs": {
+    "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime=1900-01-01&endtime=2026-11-03&minmagnitude=6&orderby=time-asc",
+    "file": "m6_1900_2026-11-03.csv",
+    "sha256": "2960a30a0d81fce36ceff5a9b264723bc9999d13e777c3c81cc566c3fcf9dab7",
+    "license": "USGS: domínio público (verificar termos)",
+    "downloaded_at": "2026-11-03T23:01:06.112767+00:00"
+  },
+  "glim": {
+    "url": "https://www.dropbox.com/s/9vuowtebp9f1iud/LiMW_GIS%202015.gdb.zip?dl=1",
+    "file": "LiMW_GIS_2015.gdb.zip",
+    "sha256": "895be0cde43f68d1fe6a24dafafbde715d9c9893adfea28916a9a69f88cc320c",
+    "license": "NÃO declarada na fonte — uso local; não publicar",
+    "downloaded_at": "2026-11-03T23:01:07.401392+00:00"
+  },
+  "georoc:2026-09-2JETOA_ALKALI_BASALT_part1": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219202",
+    "file": "2026-09-2JETOA_ALKALI_BASALT_part1.csv",
+    "sha256": "d8c0d55477cb5142a36b4498e70a0c0c5b658bf0a7d7352fb37b78c89289020b",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.422404+00:00"
+  },
+  "georoc:2026-09-2JETOA_ALKALI_BASALT_part2": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219180",
+    "file": "2026-09-2JETOA_ALKALI_BASALT_part2.csv",
+    "sha256": "863d8a43102ea2c800dc9f14bd8be90fffc221b5986697429210ac579eec53aa",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.446876+00:00"
+  },
+  "georoc:2026-09-2JETOA_ANKARAMITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219193",
+    "file": "2026-09-2JETOA_ANKARAMITE.csv",
+    "sha256": "3bae7e1a8617c1aa9b5790ed31ff77b1964766371d14ac6ff0b39baa5416d199",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.465883+00:00"
+  },
+  "georoc:2026-09-2JETOA_BASALT_part1": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219184",
+    "file": "2026-09-2JETOA_BASALT_part1.csv",
+    "sha256": "e8e841cc50dc5d944cad616314f17cb63bf12ae2fc86c8629b914680a87373d1",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.515882+00:00"
+  },
+  "georoc:2026-09-2JETOA_BASALT_part2": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219163",
+    "file": "2026-09-2JETOA_BASALT_part2.csv",
+    "sha256": "35fd49a29421a8e65ee4bea5ff74896cc7c514f9c10147876488779f7efc89d4",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.542599+00:00"
+  },
+  "georoc:2026-09-2JETOA_BASALT_part3": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219188",
+    "file": "2026-09-2JETOA_BASALT_part3.csv",
+    "sha256": "1bebedbdc4861f7b1f310e6ff1e2c6d7e94601c133c2549f20cfc35a379fcce7",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.579572+00:00"
+  },
+  "georoc:2026-09-2JETOA_BASALT_part4": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219215",
+    "file": "2026-09-2JETOA_BASALT_part4.csv",
+    "sha256": "fbda19c2595fe2b78f7c3086ec4450d9768e751370293d7a8f40a77bedc04a9d",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.612595+00:00"
+  },
+  "georoc:2026-09-2JETOA_BASALT_part5": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219190",
+    "file": "2026-09-2JETOA_BASALT_part5.csv",
+    "sha256": "c132ea0a691c9cf7cfbd49b9bee9fb7bf7d44c62246c428aa3451be767191082",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.653507+00:00"
+  },
+  "georoc:2026-09-2JETOA_BASALT_part6": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219177",
+    "file": "2026-09-2JETOA_BASALT_part6.csv",
+    "sha256": "1dec0f0295c7a888ca246fe2a007d4728b9e78fc9d43f0b02797579659989b31",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.700628+00:00"
+  },
+  "georoc:2026-09-2JETOA_BASALT_part7": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219151",
+    "file": "2026-09-2JETOA_BASALT_part7.csv",
+    "sha256": "feb3af486816f114ba47a982a8b175f297e69454ea603e8f1e93d0ad3787b059",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.754489+00:00"
+  },
+  "georoc:2026-09-2JETOA_BASALT_part8": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219143",
+    "file": "2026-09-2JETOA_BASALT_part8.csv",
+    "sha256": "6395e25211b96bd0f9b910888e83da8857198659f4b5b2aa39ba06e3fafdec08",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.817444+00:00"
+  },
+  "georoc:2026-09-2JETOA_BASALT_part9": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219205",
+    "file": "2026-09-2JETOA_BASALT_part9.csv",
+    "sha256": "c2b6a2058c15c32381c0ef9d9fafe3c70e980437a400bc42c72282bf3d516fbc",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.868098+00:00"
+  },
+  "georoc:2026-09-2JETOA_BASANITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219186",
+    "file": "2026-09-2JETOA_BASANITE.csv",
+    "sha256": "dfb924cbf64abb91a06f14862188238dcc6cd29b7aed951097b388067bb943d6",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.909901+00:00"
+  },
+  "georoc:2026-09-2JETOA_CALC-ALKALI_BASALT": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219136",
+    "file": "2026-09-2JETOA_CALC-ALKALI_BASALT.csv",
+    "sha256": "c580a885530134003b49ca94169f23bb0a35b40598ff0c2bf4ecc0f59b8e7a06",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.936639+00:00"
+  },
+  "georoc:2026-09-2JETOA_CLINOPYROXENITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219167",
+    "file": "2026-09-2JETOA_CLINOPYROXENITE.csv",
+    "sha256": "2488ac8564c8fda1348277da7fff5f4c20337ad3860701d1401d9175afaa5719",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:07.965340+00:00"
+  },
+  "georoc:2026-09-2JETOA_DOLERITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219154",
+    "file": "2026-09-2JETOA_DOLERITE.csv",
+    "sha256": "309ef1b9429f0367b000ac46e6041f64721f229320ff9ab4708a281b5bdd1531",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.020831+00:00"
+  },
+  "georoc:2026-09-2JETOA_DUNITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219135",
+    "file": "2026-09-2JETOA_DUNITE.csv",
+    "sha256": "c24d632a13a151fc8bd16ec1add2b35b608c673858affc27913d1d204bbe6687",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.055391+00:00"
+  },
+  "georoc:2026-09-2JETOA_GABBRO_part1": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219150",
+    "file": "2026-09-2JETOA_GABBRO_part1.csv",
+    "sha256": "62e27059120802e62c89b9eb22bfea9ba7807bbc7eb173341e0b97859bddd0d0",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.101312+00:00"
+  },
+  "georoc:2026-09-2JETOA_GABBRO_part2": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219155",
+    "file": "2026-09-2JETOA_GABBRO_part2.csv",
+    "sha256": "68852c215a9ff766c0b0f721ca52251d4330bf04d32b05fb2925de5345b730b7",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.136713+00:00"
+  },
+  "georoc:2026-09-2JETOA_GABBRONORITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219148",
+    "file": "2026-09-2JETOA_GABBRONORITE.csv",
+    "sha256": "d73e4ad89a7e074158a4c672d1e08fa2dfba6c61057530bea41510f7b2ea8933",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.166990+00:00"
+  },
+  "georoc:2026-09-2JETOA_HARZBURGITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219196",
+    "file": "2026-09-2JETOA_HARZBURGITE.csv",
+    "sha256": "73c560590e91695baa0a3a8ea87cf7bce491ffcc212b4194ff06ad2fcecbb506",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.202405+00:00"
+  },
+  "georoc:2026-09-2JETOA_KOMATIITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219210",
+    "file": "2026-09-2JETOA_KOMATIITE.csv",
+    "sha256": "8d90d1e6950ede5fffbf725df50121e00df85864bcab5f31514ce4eca6be4eca",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.240550+00:00"
+  },
+  "georoc:2026-09-2JETOA_LHERZOLITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219161",
+    "file": "2026-09-2JETOA_LHERZOLITE.csv",
+    "sha256": "a693d3e6ef56c72b06bff0ae6f830be7982fd6ecc66da6f7732036dd1ad31a89",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.276126+00:00"
+  },
+  "georoc:2026-09-2JETOA_NORITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219139",
+    "file": "2026-09-2JETOA_NORITE.csv",
+    "sha256": "a429407895c606f0d83d0ee42e736993bf213d01a27feec864b891f2f5988fc4",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.305838+00:00"
+  },
+  "georoc:2026-09-2JETOA_ORTHOPYROXENITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219208",
+    "file": "2026-09-2JETOA_ORTHOPYROXENITE.csv",
+    "sha256": "ac37f201732c8baf73020ff623a4f6cc6b57a0ddca71a34f90db180c19c8df23",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.338479+00:00"
+  },
+  "georoc:2026-09-2JETOA_PERIDOTITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219146",
+    "file": "2026-09-2JETOA_PERIDOTITE.csv",
+    "sha256": "12457e505a3d9e59f0532ef758e85116868228b2ce4974b9963ea6bbce72064a",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.376691+00:00"
+  },
+  "georoc:2026-09-2JETOA_PICROBASALT": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219156",
+    "file": "2026-09-2JETOA_PICROBASALT.csv",
+    "sha256": "4623b73630373861dbd37194e2d4a24c7321ff5890db2fc979581743e1778393",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.409136+00:00"
+  },
+  "georoc:2026-09-2JETOA_PYROXENITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219169",
+    "file": "2026-09-2JETOA_PYROXENITE.csv",
+    "sha256": "839a546964df6033f7368259e7d9fb19e2c36d7aa0d56592c616ab3fa176dc56",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.442353+00:00"
+  },
+  "georoc:2026-09-2JETOA_SUBALKALI_BASALT": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219220",
+    "file": "2026-09-2JETOA_SUBALKALI_BASALT.csv",
+    "sha256": "d08cd1907cad0ba5e2b1d207bf6f6bd5538ebaf92ef2cb5b853a7528aa07fec8",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.473566+00:00"
+  },
+  "georoc:2026-09-2JETOA_THOLEIITIC_BASALT_part1": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219165",
+    "file": "2026-09-2JETOA_THOLEIITIC_BASALT_part1.csv",
+    "sha256": "e7a1aa3412b3ca82ab9448dbd9ddc06d53dede94f7d19c421ed19bb823fce373",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.521621+00:00"
+  },
+  "georoc:2026-09-2JETOA_THOLEIITIC_BASALT_part2": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219203",
+    "file": "2026-09-2JETOA_THOLEIITIC_BASALT_part2.csv",
+    "sha256": "b4d78c0cff134188d10673fc048d5ca1e5c811c2b46516cffa6172f04a53f0c0",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.579412+00:00"
+  },
+  "georoc:2026-09-2JETOA_TRACHYBASALT": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219197",
+    "file": "2026-09-2JETOA_TRACHYBASALT.csv",
+    "sha256": "f354c29248b4c932a51fc50449fe4d34d3efd65c57e25e8d61578f1aa26a5ea1",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.615819+00:00"
+  },
+  "georoc:2026-09-2JETOA_TRANSITIONAL_BASALT": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219171",
+    "file": "2026-09-2JETOA_TRANSITIONAL_BASALT.csv",
+    "sha256": "19cc7c6f2c2de5dc7ae56f01c4b1c3c7f952dff68d108ba3332b666a35f92726",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.649141+00:00"
+  },
+  "georoc:2026-09-2JETOA_WEBSTERITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219198",
+    "file": "2026-09-2JETOA_WEBSTERITE.csv",
+    "sha256": "b41aa6c8344c1db36b0b647cb7125bd36d02696a329efdbea52e83d1acedf26f",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.678715+00:00"
+  },
+  "georoc:2026-09-2JETOA_WEHRLITE": {
+    "url": "https://data.goettingen-research-online.de/api/access/datafile/219209",
+    "file": "2026-09-2JETOA_WEHRLITE.csv",
+    "sha256": "797f47368620d4f26ef129c89b351d250fb108ebe8729a475dcada3998c65050",
+    "license": "CC BY-SA 4.0",
+    "downloaded_at": "2026-11-03T23:01:08.709621+00:00"
+  }
+}
