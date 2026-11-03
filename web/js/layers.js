@@ -41,6 +41,13 @@ export function mountLayerPanel(map, state, onChange) {
   const order = initialOrder(state.layers);
   const enabled = new Set(state.layers);
   const touchedOpacity = new Map(); // so aplica opacidade onde o usuario mexeu
+  const filters = {
+    classes: [...(state.filters?.classes ?? [])],
+    rock: state.filters?.rock ?? null,
+    sources: [...(state.filters?.sources ?? [])],
+    coordSource: state.filters?.coordSource ?? null,
+    lithClass: state.filters?.lithClass ?? null,
+  };
   const list = root.querySelector('.layer-list');
 
   function currentLayers() {
@@ -78,12 +85,69 @@ export function mountLayerPanel(map, state, onChange) {
   }
 
   function emit() {
-    onChange({ ...state, layers: currentLayers() });
+    onChange({ ...state, layers: currentLayers(), filters: { ...filters, classes: [...filters.classes], sources: [...filters.sources] } });
   }
 
   // Cada item e criado uma unica vez; reordenar so reposiciona os nos (nunca recria),
   // assim foco e conteudo das legendas sobrevivem.
   const items = new Map();
+
+  // Filtros das amostras: classe, nome da rocha e origem da coordenada.
+  // (Filtro por fonte e por litologia existem no estado/URL, mas ainda sem controle.)
+  function buildSampleFilters() {
+    const box = document.createElement('fieldset');
+    box.className = 'layer-filters';
+    const legend = document.createElement('legend');
+    legend.textContent = 'Filtros das amostras';
+    box.append(legend);
+
+    for (const [value, text] of [['mafic', 'Máfica'], ['ultramafic', 'Ultramáfica']]) {
+      const label = document.createElement('label');
+      label.className = 'filter-check';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = filters.classes.includes(value);
+      cb.addEventListener('change', () => {
+        filters.classes = cb.checked
+          ? [...new Set([...filters.classes, value])]
+          : filters.classes.filter((c) => c !== value);
+        emit();
+      });
+      label.append(cb, document.createTextNode(` ${text}`));
+      box.append(label);
+    }
+
+    const rockLabel = document.createElement('label');
+    rockLabel.className = 'filter-field';
+    rockLabel.append(document.createTextNode('Nome da rocha contém'));
+    const rock = document.createElement('input');
+    rock.type = 'search';
+    rock.value = filters.rock ?? '';
+    rock.autocomplete = 'off';
+    rock.addEventListener('input', () => {
+      filters.rock = rock.value === '' ? null : rock.value;
+      emit();
+    });
+    rockLabel.append(rock);
+    box.append(rockLabel);
+
+    const coordLabel = document.createElement('label');
+    coordLabel.className = 'filter-field';
+    coordLabel.append(document.createTextNode('Origem da coordenada'));
+    const coord = document.createElement('select');
+    for (const [value, text] of [['', 'Todas'], ['reported', 'Reportada'], ['geocoded', 'Geocodificada']]) {
+      coord.append(new Option(text, value));
+    }
+    coord.value = filters.coordSource ?? '';
+    if (coord.value !== (filters.coordSource ?? '')) coord.value = '';
+    coord.addEventListener('change', () => {
+      filters.coordSource = coord.value === '' ? null : coord.value;
+      emit();
+    });
+    coordLabel.append(coord);
+    box.append(coordLabel);
+    return box;
+  }
 
   function buildItem(id) {
     const def = LAYER_DEFS.find((d) => d.id === id);
@@ -148,7 +212,14 @@ export function mountLayerPanel(map, state, onChange) {
     legend.className = 'layer-legend';
     legend.dataset.legendFor = id;
 
-    li.append(head, opacity, legend);
+    // aviso de falha de carga (preenchido por main.js via onError)
+    const warning = document.createElement('p');
+    warning.className = 'layer-warning';
+    warning.dataset.warningFor = id;
+    warning.setAttribute('role', 'status');
+
+    li.append(head, opacity, legend, warning);
+    if (id === 'samples') li.append(buildSampleFilters());
     items.set(id, { li, up, down });
   }
 
