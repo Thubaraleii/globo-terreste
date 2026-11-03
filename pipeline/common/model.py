@@ -47,7 +47,6 @@ _NUMERIC = {
     "coord_uncertainty_m": "float64",
     "moment_total": "float64",
     "rank": "Int64",
-    "dup_group": "Int64",
 }
 
 
@@ -87,7 +86,9 @@ def write_layer(gpkg: Path, name: str, gdf) -> None:
             df[col] = pd.Series([None] * len(df), index=df.index, dtype=_NUMERIC.get(col, "object"))
     df = df[schema]
     if GEOMETRY_TYPES[name] is not None:
-        df = gpd.GeoDataFrame(df, geometry="geometry", crs=gdf.crs or CRS)
+        if gdf.crs is None:
+            raise ValueError(f"{name}: CRS ausente; nao presumimos EPSG:4326")
+        df = gpd.GeoDataFrame(df, geometry="geometry", crs=gdf.crs)
         if df.crs != CRS:
             df = df.to_crs(CRS)
     write_dataframe(

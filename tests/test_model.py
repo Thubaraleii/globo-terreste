@@ -1,4 +1,5 @@
 import geopandas as gpd
+import pandas as pd
 import pyogrio
 import pytest
 from shapely.geometry import Point
@@ -38,3 +39,27 @@ def test_write_layer_rejects_unknown_column(tmp_path):
     gdf = gpd.GeoDataFrame({"id": ["a"], "bogus": [1]}, geometry=[Point(0, 0)], crs="EPSG:4326")
     with pytest.raises(ValueError):
         write_layer(gpkg, "samples", gdf)
+
+
+def test_write_layer_requires_crs(tmp_path):
+    gpkg = tmp_path / "t.gpkg"
+    create_geopackage(gpkg)
+    gdf = gpd.GeoDataFrame({"id": ["a"]}, geometry=[Point(0, 0)])
+    with pytest.raises(ValueError):
+        write_layer(gpkg, "samples", gdf)
+
+
+def test_dup_group_is_text(tmp_path):
+    gpkg = tmp_path / "t.gpkg"
+    create_geopackage(gpkg)
+    gdf = gpd.GeoDataFrame(
+        {"id": ["a", "b"], "dup_group": ["ab12cd", None]},
+        geometry=[Point(0, 0), Point(1, 1)],
+        crs="EPSG:4326",
+    )
+    write_layer(gpkg, "samples", gdf)
+    out = gpd.read_file(gpkg, layer="samples")
+    assert out["dup_group"].tolist()[0] == "ab12cd"
+    assert pd.isna(out["dup_group"].tolist()[1])
+    info = pyogrio.read_info(gpkg, layer="samples")
+    assert dict(zip(info["fields"], info["dtypes"]))["dup_group"] == "object"
