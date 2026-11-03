@@ -91,10 +91,17 @@ class Source:
             )
 
 
-# Registro padrao: VAZIO de proposito. Ligar as fontes reais (nomes dos
-# arquivos brutos, mapeamento de colunas, downloads) e parte da fase de
-# aquisicao de dados; ate la o CLI apenas avisa que nao ha fontes.
-SOURCES: list[Source] = []
+# Registro usado pelo CLI. None = as fontes reais de
+# `pipeline.realsources.registry()` (importado so no CLI, para evitar import
+# circular). Uma lista (inclusive vazia, nos testes) substitui o padrao.
+SOURCES: list[Source] | None = None
+
+
+def _default_sources() -> list[Source]:
+    if SOURCES is not None:
+        return SOURCES
+    from pipeline.realsources import registry
+    return registry()
 
 
 @dataclass
@@ -285,12 +292,12 @@ def main(argv: list[str] | None = None) -> int:
                              "(escritos mesmo sem tippecanoe, para rodar a mao)")
     args = parser.parse_args(argv)
 
-    if not SOURCES:
-        print("Nenhuma fonte registrada em pipeline.build.SOURCES; nada a fazer. "
-              "A ligacao das fontes reais e parte da fase de aquisicao de dados.")
+    sources = _default_sources()
+    if not sources:
+        print("Nenhuma fonte registrada em pipeline.build.SOURCES; nada a fazer.")
         return 0
 
-    rep = build(args.raw, args.out, SOURCES, allow_network=args.allow_network,
+    rep = build(args.raw, args.out, sources, allow_network=args.allow_network,
                 tippecanoe=args.tippecanoe, force=args.force,
                 keep_intermediate=args.keep_intermediate)
     for source_id, status in rep.statuses.items():

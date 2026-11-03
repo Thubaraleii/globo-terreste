@@ -271,11 +271,19 @@ def test_build_passes_tippecanoe_to_export(tmp_path, monkeypatch):
     assert seen["tippecanoe"] == "/x/tippecanoe"
 
 
-def test_default_registry_is_empty():
-    assert build_mod.SOURCES == []
+def test_default_registry_is_the_real_sources(monkeypatch):
+    from pipeline import realsources
+    seen = {}
+    monkeypatch.setattr(build_mod, "build", lambda raw, out, sources, **kw:
+                        seen.update(ids=[s.source_id for s in sources]) or
+                        build_mod.BuildReport({}, {}, [], []))
+    assert build_mod.SOURCES is None
+    assert build_mod.main(["--raw", "r", "--out", "o"]) == 0
+    assert seen["ids"] == [s.source_id for s in realsources.registry()]
 
 
-def test_cli_with_empty_registry_prints_message(tmp_path, capsys):
+def test_cli_with_empty_registry_prints_message(tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr(build_mod, "SOURCES", [])
     code = build_mod.main(["--raw", str(tmp_path / "raw"), "--out", str(tmp_path / "out")])
     assert code == 0
     assert "nenhuma fonte" in capsys.readouterr().out.lower()
