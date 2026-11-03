@@ -4,8 +4,11 @@
 // ou `X:alguma-coisa` (ex.: `samples:clusters`). O painel age sobre todas elas e nao
 // falha se ainda nao existirem. Cada item tem um espaco para legenda:
 // `[data-legend-for="X"]`.
-import { LAYER_DEFS, LAYER_IDS, moveItem } from './layer-defs.js';
+import { LAYER_DEFS, LAYER_IDS, moveItem, raiseAbove } from './layer-defs.js';
 import { BASEMAPS, availableBasemaps, applyBasemap } from './basemaps.js';
+import { LITH_COLORS } from './layerstyles.js';
+
+const LITH_LABELS = new Map(LITH_COLORS.map(([value, , label]) => [value, label]));
 
 export { LAYER_DEFS };
 
@@ -92,8 +95,42 @@ export function mountLayerPanel(map, state, onChange) {
   // assim foco e conteudo das legendas sobrevivem.
   const items = new Map();
 
+  // Filtro por litologia da unidade: definido pelo painel de detalhes ("Ver amostras
+  // desta litologia"); aqui so aparece o valor ativo e o botao para limpar.
+  const lithRow = document.createElement('div');
+  lithRow.className = 'filter-lith';
+  const lithText = document.createElement('span');
+  lithText.setAttribute('role', 'status');
+  const lithClear = document.createElement('button');
+  lithClear.type = 'button';
+  lithClear.className = 'text-btn';
+  lithClear.textContent = 'Limpar filtro de litologia';
+  lithClear.addEventListener('click', () => setLithClass(null));
+  lithRow.append(lithText, lithClear);
+
+  function renderLith() {
+    const v = filters.lithClass;
+    lithRow.hidden = v == null;
+    lithText.textContent = v == null ? '' : `Litologia da unidade: ${LITH_LABELS.get(v) ?? v}`;
+  }
+
+  // Define (ou limpa, com null) o filtro por litologia. Ao definir, liga as amostras
+  // e as coloca acima das unidades geologicas, para os pontos ficarem visiveis.
+  function setLithClass(value) {
+    filters.lithClass = typeof value === 'string' && value !== '' ? value : null;
+    if (filters.lithClass !== null) {
+      enabled.add('samples');
+      items.get('samples').cb.checked = true;
+      order.splice(0, order.length, ...raiseAbove(order, 'samples', 'geo_units'));
+      layout();
+    }
+    applyToMap();
+    renderLith();
+    emit();
+  }
+
   // Filtros das amostras: classe, nome da rocha e origem da coordenada.
-  // (Filtro por fonte e por litologia existem no estado/URL, mas ainda sem controle.)
+  // (Filtro por fonte existe no estado/URL, mas ainda sem controle.)
   function buildSampleFilters() {
     const box = document.createElement('fieldset');
     box.className = 'layer-filters';
@@ -145,7 +182,8 @@ export function mountLayerPanel(map, state, onChange) {
       emit();
     });
     coordLabel.append(coord);
-    box.append(coordLabel);
+    box.append(coordLabel, lithRow);
+    renderLith();
     return box;
   }
 
@@ -220,7 +258,7 @@ export function mountLayerPanel(map, state, onChange) {
 
     li.append(head, opacity, legend, warning);
     if (id === 'samples') li.append(buildSampleFilters());
-    items.set(id, { li, up, down });
+    items.set(id, { li, up, down, cb });
   }
 
   // Posiciona os itens existentes (topo da pilha primeiro) e atualiza os botoes.
@@ -253,4 +291,5 @@ export function mountLayerPanel(map, state, onChange) {
     applyToMap();
   });
   if (map.getStyle()) applyToMap();
+  return { setLithClass };
 }

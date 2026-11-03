@@ -1,6 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { moveItem } from '../js/layer-defs.js';
+import { moveItem, raiseAbove } from '../js/layer-defs.js';
+
+test('test_raise_above_moves_only_when_below', () => {
+  assert.deepEqual(raiseAbove(['s', 'a', 'g', 'v'], 's', 'g'), ['a', 'g', 's', 'v']);
+  assert.deepEqual(raiseAbove(['g', 'a', 's', 'v'], 's', 'g'), ['g', 'a', 's', 'v']);
+  assert.deepEqual(raiseAbove(['a', 'b'], 'zz', 'a'), ['a', 'b']);
+  const o = ['s', 'g'];
+  raiseAbove(o, 's', 'g');
+  assert.deepEqual(o, ['s', 'g']);
+});
 
 test('test_move_item_up_and_down', () => {
   assert.deepEqual(moveItem(['a', 'b', 'c'], 'a', +1), ['b', 'a', 'c']);

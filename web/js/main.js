@@ -2,6 +2,8 @@ import { decodeState } from './urlstate.js';
 import { createMap, setAppState } from './map.js';
 import { mountLayerPanel } from './layers.js';
 import { addDataLayers, applySampleFilter } from './datalayers.js';
+import { renderSample, renderUnit, renderVolcano, renderZone, indexSources } from './inspector.js';
+import { parseCoords, searchIndex, buildSearchItems } from './search.js';
 
 // Pasta dos dados (relativa a pagina); sem sobrescrita por URL.
 const DATA_BASE = 'data/';
@@ -10,7 +12,7 @@ const WARNING = 'Camada indisponível: não foi possível carregar os dados.';
 const state = decodeState(window.location.hash);
 const map = createMap(document.getElementById('map'), state);
 
-mountLayerPanel(map, state, (next) => {
+const layerPanel = mountLayerPanel(map, state, (next) => {
   applySampleFilter(map, next.filters);
   setAppState(map, next);
 });
@@ -31,6 +33,226 @@ const setOpen = (open) => {
 };
 setOpen(window.matchMedia('(min-width: 720px)').matches);
 toggle.addEventListener('click', () => setOpen(!panel.classList.contains('is-open')));
+
+async function fetchJson(name) {
+  const res = await fetch(`${DATA_BASE}${name}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Fontes (sources.json): carregadas uma vez; se falhar, os detalhes da fonte
+// aparecem como "não informado" e o resto segue.
+let sources = new Map();
+const sourceOf = (props) => sources.get(props?.source_id);
+
+// ---------------------------------------------------------------------------
+// Painel de detalhes. Os renderizadores de inspector.js escapam todo dado.
+const details = document.getElementById('details-panel');
+const detailsBody = details.querySelector('.details-body');
+const detailsStatus = details.querySelector('.details-status');
+let current = null; // { render, wire } do item aberto
+
+function paint() {
+  detailsBody.innerHTML = current.render();
+  current.wire?.(detailsBody);
+}
+
+function openDetails(render, wire) {
+  current = { render, wire };
+  detailsStatus.textContent = '';
+  paint();
+  details.hidden = false;
+  details.scrollTop = 0;
+  detailsBody.querySelector('.details-heading')?.focus();
+}
+
+function closeDetails() {
+  if (details.hidden) return;
+  details.hidden = true;
+  detailsBody.textContent = '';
+  detailsStatus.textContent = '';
+  current = null;
+  map.getCanvas().focus();
+}
+
+details.querySelector('.details-close').addEventListener('click', closeDetails);
+
+fetchJson('sources.json')
+  .then((list) => {
+    sources = indexSources(list);
+    if (current) {
+      // refaz o painel aberto com os dados da fonte, mantendo o foco no titulo
+      const hadFocus = detailsBody.contains(document.activeElement);
+      paint();
+      if (hadFocus) detailsBody.querySelector('.details-heading')?.focus();
+    }
+  })
+  .catch((err) => console.warn('Fontes indisponíveis (sources.json):', err));
+
+function openUnit(props) {
+  openDetails(
+    () => renderUnit(props, props.sample_count, { source: sourceOf(props) }),
+    (root) => {
+      root.querySelector('[data-action="filter-lith"]')?.addEventListener('click', () => {
+        layerPanel.setLithClass(props.lith_class);
+        detailsStatus.textContent = 'Filtro aplicado: as amostras mostradas são desta litologia. '
+          + 'Use “Limpar filtro de litologia” no painel de camadas para remover.';
+      });
+    },
+  );
+}
+
+// Unidade que contem o ponto (camada geo_units visivel), para a litologia original.
+function unitAt(point, unitId) {
+  if (unitId == null || !point || !map.getLayer('geo_units')) return null;
+  const hit = map.queryRenderedFeatures(point, { layers: ['geo_units'] })
+    .find((f) => String(f.properties?.unit_id) === String(unitId));
+  return hit?.properties ?? null;
+}
+
+function openSample(props, point) {
+  const unit = unitAt(point, props.unit_id);
+  openDetails(() => renderSample(props, {
+    source: sourceOf(props),
+    unitLithOriginal: unit?.lith_original,
+    unitSource: unit ? sourceOf(unit) : undefined,
+  }));
+}
+
+function openFeature(layerId, props, point) {
+  const p = props ?? {};
+  if (layerId === 'samples:points') openSample(p, point);
+  else if (layerId === 'geo_units') openUnit(p);
+  else if (layerId === 'volcanoes') openDetails(() => renderVolcano(p, { source: sourceOf(p) }));
+  else if (layerId === 'tectonic_zones') openDetails(() => renderZone(p, { source: sourceOf(p) }));
+}
+
+// ---------------------------------------------------------------------------
+// Clique no mapa: a feicao de cima entre as camadas interativas.
+const CLICK_LAYERS = ['samples:points', 'volcanoes', 'tectonic_zones', 'geo_units'];
+const HIT_PAD = 4; // px de folga (linhas finas)
+
+function featuresAt(point) {
+  const layers = CLICK_LAYERS.filter((id) => map.getLayer(id));
+  if (layers.length === 0) return [];
+  const box = [[point.x - HIT_PAD, point.y - HIT_PAD], [point.x + HIT_PAD, point.y + HIT_PAD]];
+  return map.queryRenderedFeatures(box, { layers });
+}
+
+map.on('click', (e) => {
+  const f = featuresAt(e.point)[0];
+  if (f) openFeature(f.layer.id, f.properties, e.point);
+});
+
+map.on('mousemove', (e) => {
+  map.getCanvas().style.cursor = featuresAt(e.point).length ? 'pointer' : '';
+});
+
+// ---------------------------------------------------------------------------
+// Busca: nomes de vulcoes e zonas (GeoJSON) e coordenadas "lat, lon".
+const searchInput = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+const searchStatus = document.getElementById('search-status');
+const KIND_TEXT = { volcano: 'Vulcão', hotspot: 'Hotspot', tectonic_zone: 'Zona tectônica' };
+const FLY_ZOOM = { volcanoes: 7, tectonic_zones: 4 };
+let searchItems = [];
+
+Promise.allSettled([fetchJson('volcanoes.geojson'), fetchJson('tectonic_zones.geojson')])
+  .then(([v, z]) => {
+    searchItems = buildSearchItems(v.value ?? null, z.value ?? null);
+  });
+
+function closeResults() {
+  searchResults.hidden = true;
+  searchResults.textContent = '';
+  searchInput.setAttribute('aria-expanded', 'false');
+}
+
+function choose(item) {
+  closeResults();
+  searchInput.value = item.name;
+  searchStatus.textContent = '';
+  map.flyTo({ center: [item.lng, item.lat], zoom: Math.max(map.getZoom(), FLY_ZOOM[item.layer] ?? 5) });
+  openFeature(item.layer, item.props, null);
+}
+
+function showResults() {
+  const coords = parseCoords(searchInput.value);
+  const found = searchIndex(searchItems, searchInput.value);
+  searchResults.textContent = '';
+  for (const item of found) {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    const kind = document.createElement('span');
+    kind.className = 'search-kind';
+    kind.textContent = ` — ${KIND_TEXT[item.kind] ?? ''}`;
+    btn.append(document.createTextNode(item.name), kind);
+    btn.addEventListener('click', () => choose(item));
+    li.append(btn);
+    searchResults.append(li);
+  }
+  const open = found.length > 0;
+  searchResults.hidden = !open;
+  searchInput.setAttribute('aria-expanded', String(open));
+  if (coords) searchStatus.textContent = 'Pressione Enter para ir até essas coordenadas.';
+  else if (searchInput.value.trim() !== '' && !open) searchStatus.textContent = 'Nenhum resultado.';
+  else searchStatus.textContent = '';
+}
+
+searchInput.addEventListener('input', showResults);
+
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const coords = parseCoords(searchInput.value);
+    if (coords) {
+      closeResults();
+      map.flyTo({ center: [coords.lng, coords.lat], zoom: Math.max(map.getZoom(), 7) });
+      searchStatus.textContent = `Indo para ${coords.lat}, ${coords.lng}.`;
+      return;
+    }
+    const first = searchResults.querySelector('button');
+    if (first) first.click();
+  } else if (e.key === 'ArrowDown') {
+    const first = searchResults.querySelector('button');
+    if (first) {
+      e.preventDefault();
+      first.focus();
+    }
+  } else if (e.key === 'Escape' && !searchResults.hidden) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeResults();
+  }
+});
+
+searchResults.addEventListener('keydown', (e) => {
+  const buttons = [...searchResults.querySelectorAll('button')];
+  const i = buttons.indexOf(document.activeElement);
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const j = i + (e.key === 'ArrowDown' ? 1 : -1);
+    if (j < 0) searchInput.focus();
+    else buttons[Math.min(j, buttons.length - 1)]?.focus();
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    closeResults();
+    searchInput.focus();
+  }
+});
+
+// Fecha a lista ao clicar fora da busca.
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('search').contains(e.target)) closeResults();
+});
+
+// Escape fecha o painel de detalhes.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !details.hidden) closeDetails();
+});
 
 // Atalho para depuracao e para os testes de fumaca.
 window.geoworldMap = map;
