@@ -46,3 +46,18 @@ test('test_unknown_layer_ids_are_dropped', () => {
   const s = decodeState('#layers=volcanoes,bogus,samples,__proto__');
   assert.deepEqual(s.layers, ['volcanoes', 'samples']);
 });
+
+test('test_encode_state_missing_layers_does_not_throw', () => {
+  const { layers, ...rest } = DEFAULT_STATE;
+  const decoded = decodeState(encodeState(rest));
+  assert.deepEqual(decoded.layers, []);
+});
+
+test('test_encode_state_non_finite_numbers_fall_back_to_defaults', () => {
+  const hash = encodeState({ ...DEFAULT_STATE, lng: NaN, lat: Infinity, zoom: undefined });
+  assert.ok(!/NaN|Infinity|undefined/.test(hash), hash);
+  const d = decodeState(hash);
+  assert.equal(d.lng, DEFAULT_STATE.lng);
+  assert.equal(d.lat, DEFAULT_STATE.lat);
+  assert.equal(d.zoom, DEFAULT_STATE.zoom);
+});

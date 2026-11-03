@@ -39,10 +39,14 @@ function defaults() {
 
 export function encodeState(state) {
   const p = new URLSearchParams();
-  p.set('lng', String(round(clamp(state.lng, -180, 180), 4)));
-  p.set('lat', String(round(clamp(state.lat, -90, 90), 4)));
-  p.set('zoom', String(round(clamp(state.zoom, ZOOM_MIN, ZOOM_MAX), 2)));
-  p.set('layers', state.layers.filter((id) => LAYER_IDS.includes(id)).join(','));
+  // numero nao finito: omite o parametro (decodeState volta ao valor padrao)
+  const put = (key, v, lo, hi, digits) => {
+    if (Number.isFinite(v)) p.set(key, String(round(clamp(v, lo, hi), digits)));
+  };
+  put('lng', state.lng, -180, 180, 4);
+  put('lat', state.lat, -90, 90, 4);
+  put('zoom', state.zoom, ZOOM_MIN, ZOOM_MAX, 2);
+  p.set('layers', (state.layers ?? []).filter((id) => LAYER_IDS.includes(id)).join(','));
   const f = state.filters ?? {};
   for (const c of f.classes ?? []) p.append('class', c);
   if (f.rock != null) p.set('rock', f.rock);

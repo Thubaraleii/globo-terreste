@@ -4,7 +4,7 @@
 // ou `X:alguma-coisa` (ex.: `samples:clusters`). O painel age sobre todas elas e nao
 // falha se ainda nao existirem. Cada item tem um espaco para legenda:
 // `[data-legend-for="X"]`.
-import { LAYER_DEFS, LAYER_IDS } from './layer-defs.js';
+import { LAYER_DEFS, LAYER_IDS, moveItem } from './layer-defs.js';
 import { BASEMAPS, availableBasemaps, applyBasemap } from './basemaps.js';
 
 export { LAYER_DEFS };
@@ -81,75 +81,84 @@ export function mountLayerPanel(map, state, onChange) {
     onChange({ ...state, layers: currentLayers() });
   }
 
-  function render() {
-    list.replaceChildren();
-    // topo da pilha primeiro
-    [...order].reverse().forEach((id) => {
-      const def = LAYER_DEFS.find((d) => d.id === id);
-      const li = document.createElement('li');
-      li.className = 'layer-item';
-      li.dataset.layerId = id;
+  // Cada item e criado uma unica vez; reordenar so reposiciona os nos (nunca recria),
+  // assim foco e conteudo das legendas sobrevivem.
+  const items = new Map();
 
-      const head = document.createElement('div');
-      head.className = 'layer-head';
+  function buildItem(id) {
+    const def = LAYER_DEFS.find((d) => d.id === id);
+    const li = document.createElement('li');
+    li.className = 'layer-item';
+    li.dataset.layerId = id;
 
-      const label = document.createElement('label');
-      label.className = 'layer-toggle';
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = enabled.has(id);
-      cb.addEventListener('change', () => {
-        if (cb.checked) enabled.add(id);
-        else enabled.delete(id);
-        applyToMap();
-        emit();
-      });
-      label.append(cb, document.createTextNode(` ${def.label}`));
+    const head = document.createElement('div');
+    head.className = 'layer-head';
 
-      const move = (delta) => {
-        const i = order.indexOf(id);
-        const j = i + delta;
-        if (j < 0 || j >= order.length) return;
-        [order[i], order[j]] = [order[j], order[i]];
-        applyToMap();
-        render();
-        emit();
-      };
-      const mkBtn = (text, aria, delta) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'icon-btn';
-        b.textContent = text;
-        b.setAttribute('aria-label', `${aria}: ${def.label}`);
-        b.addEventListener('click', () => move(delta));
-        return b;
-      };
-      const pos = order.indexOf(id);
-      const up = mkBtn('▲', 'Subir camada', +1);
-      const down = mkBtn('▼', 'Descer camada', -1);
-      up.disabled = pos === order.length - 1;
-      down.disabled = pos === 0;
-      head.append(label, up, down);
+    const label = document.createElement('label');
+    label.className = 'layer-toggle';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = enabled.has(id);
+    cb.addEventListener('change', () => {
+      if (cb.checked) enabled.add(id);
+      else enabled.delete(id);
+      applyToMap();
+      emit();
+    });
+    label.append(cb, document.createTextNode(` ${def.label}`));
 
-      const opacity = document.createElement('input');
-      opacity.type = 'range';
-      opacity.min = '0';
-      opacity.max = '1';
-      opacity.step = '0.05';
-      opacity.value = String(touchedOpacity.get(id) ?? 1);
-      opacity.className = 'layer-opacity';
-      opacity.setAttribute('aria-label', `Opacidade: ${def.label}`);
-      opacity.addEventListener('input', () => {
-        touchedOpacity.set(id, Number(opacity.value));
-        applyToMap();
-      });
+    const move = (delta) => {
+      const next = moveItem(order, id, delta);
+      if (next.every((x, i) => x === order[i])) return;
+      order.splice(0, order.length, ...next);
+      applyToMap();
+      layout();
+      // reposicionar o no pode tirar o foco: devolve ao mesmo botao (ou ao outro, na borda)
+      const btn = delta > 0 ? up : down;
+      (btn.disabled ? (delta > 0 ? down : up) : btn).focus();
+      emit();
+    };
+    const mkBtn = (text, aria, delta) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'icon-btn';
+      b.textContent = text;
+      b.setAttribute('aria-label', `${aria}: ${def.label}`);
+      b.addEventListener('click', () => move(delta));
+      return b;
+    };
+    const up = mkBtn('▲', 'Subir camada', +1);
+    const down = mkBtn('▼', 'Descer camada', -1);
+    head.append(label, up, down);
 
-      const legend = document.createElement('div');
-      legend.className = 'layer-legend';
-      legend.dataset.legendFor = id;
+    const opacity = document.createElement('input');
+    opacity.type = 'range';
+    opacity.min = '0';
+    opacity.max = '1';
+    opacity.step = '0.05';
+    opacity.value = '1';
+    opacity.className = 'layer-opacity';
+    opacity.setAttribute('aria-label', `Opacidade: ${def.label}`);
+    opacity.addEventListener('input', () => {
+      touchedOpacity.set(id, Number(opacity.value));
+      applyToMap();
+    });
 
-      li.append(head, opacity, legend);
-      list.append(li);
+    const legend = document.createElement('div');
+    legend.className = 'layer-legend';
+    legend.dataset.legendFor = id;
+
+    li.append(head, opacity, legend);
+    items.set(id, { li, up, down });
+  }
+
+  // Posiciona os itens existentes (topo da pilha primeiro) e atualiza os botoes.
+  function layout() {
+    [...order].reverse().forEach((id, k) => {
+      const { li, up, down } = items.get(id);
+      up.disabled = k === 0;
+      down.disabled = k === order.length - 1;
+      list.append(li); // append de no existente = mover
     });
   }
 
@@ -166,7 +175,8 @@ export function mountLayerPanel(map, state, onChange) {
     basemapBox.hidden = true;
   }
 
-  render();
+  for (const id of order) buildItem(id);
+  layout();
   // camadas adicionadas depois (Tarefa 11) herdam visibilidade/opacidade/ordem
   map.on('styledata', () => {
     applyToMap();
