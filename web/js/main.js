@@ -255,4 +255,4 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Atalho para depuracao e para os testes de fumaca.
-window.geoworldMap = map;
+if (['127.0.0.1', 'localhost'].includes(window.location.hostname)) window.geoworldMap = map;

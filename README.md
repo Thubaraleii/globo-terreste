@@ -53,13 +53,13 @@ Arquivos esperados pelo globo: `volcanoes.geojson`, `tectonic_zones.geojson`, `s
 
 ## Rodar o globo localmente
 
-Qualquer servidor estático servindo `web/` serve, por exemplo:
-
 ```
-.venv/Scripts/python -m http.server 8765 -d web --bind 127.0.0.1
+npm run serve
 ```
 
-e abra `http://127.0.0.1:8765/`. O estado (posição, camadas, filtros) fica no hash da URL.
+Abre um servidor estático **somente em loopback** (`http://127.0.0.1:8766/`; `PORT=1234 npm run serve` muda a porta) servindo `web/`. Ele suporta requisições HTTP Range, que os PMTiles exigem. Qualquer outro servidor ou hospedagem **precisa** suportar Range (o GitHub Pages suporta); o `python -m http.server` **não** serve, porque responde sempre o arquivo inteiro.
+
+Atenção: o carregamento real de PMTiles **não foi verificado de ponta a ponta** (não há tippecanoe aqui, então não existe nenhum arquivo `.pmtiles`); só o comportamento de Range do servidor é testado. O estado (posição, camadas, filtros) fica no hash da URL.
 
 ## Testes
 
@@ -70,7 +70,9 @@ npm run test:e2e                               # = playwright test (teste de fum
 ```
 
 - O e2e usa o **Microsoft Edge** já instalado (`channel: 'msedge'`); com `GEOWORLD_BROWSER=chrome` usa o Chrome. Ele **não baixa navegador**: não rode `npx playwright install`.
-- O e2e sobe um servidor estático próprio em `127.0.0.1:8765`, copia dados **sintéticos** de `tests/e2e/data/` para `web/data/` e remove só o que copiou ao terminar. Se `web/data/` já tiver esses arquivos, ele aborta para não sobrescrevê-los.
+- O e2e sobe esse mesmo servidor estático em `127.0.0.1:8767` (porta diferente da de `npm run serve`), copia dados **sintéticos** de `tests/e2e/data/` para `web/data/` e remove só o que copiou ao terminar. Se `web/data/` já tiver esses arquivos, ele aborta para não sobrescrevê-los.
+- `window.geoworldMap` (usado pelo e2e) só é exposto quando o host é `127.0.0.1` ou `localhost`.
+- `web/tests/static-server.test.js` testa o servidor estático (200, 206, 416, HEAD, bloqueio de `..` e leitura por duas faixas no estilo PMTiles).
 - O teste de estilo (`web/tests/style-validate.test.js`) valida as camadas de `buildLayers()` com `@maplibre/maplibre-gl-style-spec`, com controles negativos que provam que o validador rejeita estilos inválidos.
 - Não existem PMTiles nos testes (não há tippecanoe aqui): o e2e verifica justamente que a ausência deles mostra o aviso no painel sem quebrar o resto.
 

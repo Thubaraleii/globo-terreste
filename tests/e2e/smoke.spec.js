@@ -13,7 +13,8 @@ function watch(page) {
   page.on('pageerror', (e) => pageErrors.push(String(e)));
   page.on('console', (m) => {
     if (m.type() !== 'error') return;
-    if (PMTILES_RE.test(m.location().url) || PMTILES_RE.test(m.text())) return;
+    // so a falha de carga do recurso, e so dos PMTiles ausentes
+    if (PMTILES_RE.test(m.location().url) && /^Failed to load resource/.test(m.text())) return;
     if (FAVICON_RE.test(m.location().url)) return;
     consoleErrors.push(`${m.text()} @ ${m.location().url}`);
   });

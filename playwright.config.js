@@ -2,7 +2,7 @@
 // Nunca baixa navegador: nao rode `npx playwright install`.
 import { defineConfig } from '@playwright/test';
 
-const PORT = 8765;
+const PORT = 8767; // diferente de `npm run serve` (8766)
 const channel = process.env.GEOWORLD_BROWSER === 'chrome' ? 'chrome' : 'msedge';
 
 export default defineConfig({
@@ -23,6 +23,6 @@ export default defineConfig({
     command: 'node tests/e2e/static-server.mjs',
     url: `http://127.0.0.1:${PORT}/index.html`,
     reuseExistingServer: false,
-    env: { GEOWORLD_PORT: String(PORT) },
+    env: { PORT: String(PORT) },
   },
 });

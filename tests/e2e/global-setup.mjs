@@ -12,7 +12,11 @@ export default function globalSetup() {
   const madeDir = !existsSync(DEST);
   const clash = FILES.filter((f) => existsSync(join(DEST, f)));
   if (clash.length > 0) {
-    throw new Error(`web/data/ ja tem ${clash.join(', ')}; mova-os antes de rodar o e2e (ele usa dados sinteticos).`);
+    throw new Error(
+      `web/data/ ja tem ${clash.join(', ')}. Podem ser sobras sinteticas de um e2e interrompido: `
+      + 'abra cada arquivo e procure o marcador "sintetico-vulcoes" (volcanoes/tectonic_zones/sources.json) '
+      + 'ou "Sintético" nos nomes. So apague se for sintetico; se forem dados reais, mova-os antes de rodar o e2e.',
+    );
   }
   mkdirSync(DEST, { recursive: true });
   const created = [];
