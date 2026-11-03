@@ -1,0 +1,48 @@
+{
+  "$comment": "Contrato pipeline -> web: propriedades (e tipo JSON) que export_web escreve e a web le, por camada. Nulo e sempre permitido. Testado por tests/test_contract.py e web/tests/contract.test.js.",
+  "volcanoes": {
+    "name": "string",
+    "kind": "string",
+    "type": "string",
+    "last_eruption": "string",
+    "country": "string",
+    "reference": "string",
+    "source_id": "string"
+  },
+  "tectonic_zones": {
+    "rank": "integer",
+    "name": "string",
+    "moment_total": "string",
+    "moment_log10": "number",
+    "period_start": "string",
+    "period_end": "string",
+    "source_id": "string"
+  },
+  "geo_units": {
+    "unit_id": "string",
+    "lith_original": "string",
+    "lith_class": "string",
+    "source_id": "string",
+    "sample_count": "integer"
+  },
+  "samples": {
+    "id": "string",
+    "rock_name_original": "string",
+    "rock_class": "string",
+    "coord_source": "string",
+    "coord_uncertainty_m": "number",
+    "unit_id": "string",
+    "dup_group": "string",
+    "source_id": "string",
+    "unit_lith_class": "string"
+  },
+  "sources": {
+    "source_id": "string",
+    "institution": "string",
+    "source_url": "string",
+    "license": "string",
+    "attribution": "string",
+    "acquisition_date": "string",
+    "original_scale": "string"
+  }
+}
