@@ -31,6 +31,11 @@ def _blank_to_null(series: pd.Series) -> pd.Series:
     )
 
 
+def _valid_coords(lon: pd.Series, lat: pd.Series) -> pd.Series:
+    """True onde lon/lat sao finitos e dentro de +-180 / +-90 (NaN -> False)."""
+    return lon.abs().le(180) & lat.abs().le(90)
+
+
 def _build(df: pd.DataFrame, kind: str, source_id: str) -> gpd.GeoDataFrame:
     """df tem name, lon, lat (numericos) e opcionais do esquema."""
     out = pd.DataFrame(index=df.index)
@@ -53,7 +58,7 @@ def normalize_gvp(df: pd.DataFrame, source_id: str) -> gpd.GeoDataFrame:
     renamed = df.rename(columns=GVP_COLUMNS)
     lon = pd.to_numeric(renamed["lon"], errors="coerce")
     lat = pd.to_numeric(renamed["lat"], errors="coerce")
-    keep = lon.notna() & lat.notna()
+    keep = _valid_coords(lon, lat)
     kept = renamed[keep].copy()
     kept["lon"], kept["lat"] = lon[keep], lat[keep]
     gdf = _build(kept, "volcano", source_id)
@@ -68,6 +73,11 @@ def load_hotspots(csv: Path, source_id: str) -> gpd.GeoDataFrame:
     ref = df["reference"].str.strip()
     if (ref == "").any():
         raise ValueError(f"hotspots sem reference: {df.loc[ref == '', 'name'].tolist()}")
-    df["lon"] = pd.to_numeric(df["lon"])
-    df["lat"] = pd.to_numeric(df["lat"])
+    df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
+    df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
+    bad = ~_valid_coords(df["lon"], df["lat"])
+    if bad.any():
+        raise ValueError(
+            f"hotspots com coordenadas invalidas: {df.loc[bad, 'name'].tolist()}"
+        )
     return _build(df, "hotspot", source_id)

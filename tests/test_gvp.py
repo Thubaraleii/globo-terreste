@@ -64,6 +64,31 @@ def test_load_hotspots_empty_file_returns_empty_frame(tmp_path):
     assert out.crs == "EPSG:4326"
 
 
+@pytest.mark.parametrize("row", [
+    "Ponto Branco,,20,Ref",
+    "Ponto Branco,10,abc,Ref",
+    "Ponto Branco,10,95,Ref",
+    "Ponto Branco,181,20,Ref",
+    "Ponto Branco,inf,20,Ref",
+])
+def test_load_hotspots_rejects_bad_coords(tmp_path, row):
+    csv = tmp_path / "h.csv"
+    csv.write_text(f"name,lon,lat,reference\n{row}\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="Ponto Branco"):
+        load_hotspots(csv, "curated")
+
+
+def test_normalize_gvp_drops_bad_coords_and_counts():
+    df = pd.DataFrame({
+        "Volcano Name": ["ok", "texto", "lat95", "lon200", "inf", "nan"],
+        "Latitude": ["10", "abc", "95", "10", "inf", "nan"],
+        "Longitude": ["20", "20", "20", "200", "20", "20"],
+    })
+    out = normalize_gvp(df, "gvp")
+    assert list(out["name"]) == ["ok"]
+    assert out.attrs["dropped_no_coords"] == 5
+
+
 def test_shipped_hotspot_list_has_no_rows():
     shipped = Path(__file__).parent.parent / "data" / "curated" / "hotspots.csv"
     assert len(load_hotspots(shipped, "curated")) == 0
