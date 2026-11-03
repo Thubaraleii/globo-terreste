@@ -197,6 +197,22 @@ def _write_cache(cache: Path, layer: str, gdf: gpd.GeoDataFrame) -> None:
     os.replace(tmp, cache)
 
 
+def _drop_duplicate_ids(frames: list, sids: list[str]) -> dict[str, int]:
+    """Remove, no lugar, as amostras cujo `id` ja apareceu numa fonte anterior
+    (a ordem do registro vence; repeticao dentro da mesma fonte e mantida).
+    Devolve quantas linhas cada fonte perdeu."""
+    seen: set = set()
+    dropped: dict[str, int] = {}
+    for i, (frame, sid) in enumerate(zip(frames, sids)):
+        ids = frame["id"]
+        dup = ids.isin(seen) & ids.notna()
+        dropped[sid] = dropped.get(sid, 0) + int(dup.sum())
+        if dup.any():
+            frames[i] = frame[~dup]
+        seen.update(ids.dropna())
+    return dropped
+
+
 def build(raw_dir: Path, out_dir: Path, sources: list[Source],
           allow_network: bool = False, tippecanoe: str | None = None,
           force: bool = False, keep_intermediate: Path | None = None) -> BuildReport:
@@ -212,6 +228,7 @@ def build(raw_dir: Path, out_dir: Path, sources: list[Source],
     notes: dict[str, dict] = {}
     frames: dict[str, list[gpd.GeoDataFrame]] = {layer: [] for layer in LAYERS}
     contributing: list[Source] = []
+    sample_sids: list[str] = []  # alinhado a frames["samples"]
 
     for src in sources:
         sid = src.source_id
@@ -248,6 +265,8 @@ def build(raw_dir: Path, out_dir: Path, sources: list[Source],
             frame = read_dataframe(cache, layer=src.layer)
             statuses[sid] = "processed"
         frames[src.layer].append(frame)
+        if src.layer == "samples":
+            sample_sids.append(sid)
         contributing.append(src)
     frame = None
 
@@ -263,6 +282,11 @@ def build(raw_dir: Path, out_dir: Path, sources: list[Source],
         for gdf in frames[layer]:
             write_layer(gpkg, layer, gdf)
     if frames["samples"]:
+        dropped = _drop_duplicate_ids(frames["samples"], sample_sids)
+        for sid, n in dropped.items():
+            if n:
+                notes[sid]["dropped_duplicate_ids"] = n
+        notes["_build"] = {"dropped_duplicate_ids": sum(dropped.values())}
         samples = gpd.GeoDataFrame(
             pd.concat(frames["samples"], ignore_index=True), geometry="geometry", crs=CRS,
         )
@@ -317,6 +341,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{source_id}: {status}")
         for name, value in rep.notes.get(source_id, {}).items():
             print(f"  {name}: {value}")
+    for name, value in rep.notes.get("_build", {}).items():
+        print(f"{name}: {value}")
     for layer, n in rep.counts.items():
         print(f"{layer}: {n} linhas")
     for path in rep.files:

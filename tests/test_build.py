@@ -220,6 +220,32 @@ def test_post_steps_link_duplicates_and_units(tmp_path):
     assert rep.counts["samples"] == 3 and rep.counts["geo_units"] == 1
 
 
+def test_duplicate_sample_ids_across_sources_keep_the_first_source(tmp_path, capsys):
+    raw, out = tmp_path / "raw", tmp_path / "out"
+    _write_raw(raw, "a.json", [
+        {"id": "x1", "rock_name_original": "Basalt", "lon": 0.5, "lat": 0.5},
+        {"id": "x2", "rock_name_original": "Basalt", "lon": 1.5, "lat": 0.5},
+    ])
+    _write_raw(raw, "b.json", [
+        {"id": "x1", "rock_name_original": "Basalt", "lon": 9.0, "lat": 9.0},
+        {"id": "b2", "rock_name_original": "Basalt", "lon": 2.5, "lat": 0.5},
+    ])
+    sources = [Src("src_a", "a.json", "samples", Loader("samples")),
+               Src("src_b", "b.json", "samples", Loader("samples"))]
+    rep = build(raw, out, sources)
+    s = read_dataframe(out / "geoworld.gpkg", layer="samples").set_index("id")
+    assert sorted(s.index) == ["b2", "x1", "x2"] and s.index.is_unique
+    assert s.loc["x1", "source_id"] == "src_a" and s.loc["x1"].geometry.x == 0.5
+    assert rep.counts["samples"] == 3
+    assert rep.notes["src_b"]["dropped_duplicate_ids"] == 1
+    assert "dropped_duplicate_ids" not in rep.notes["src_a"]
+    assert rep.notes["_build"] == {"dropped_duplicate_ids": 1}
+    # 2a execucao (tudo em cache): a contagem continua no relatorio
+    again = build(raw, out, sources)
+    assert again.notes["_build"] == {"dropped_duplicate_ids": 1}
+    assert again.notes["src_b"]["dropped_duplicate_ids"] == 1
+
+
 def test_empty_sample_source_is_assembled_cleanly(tmp_path):
     raw, out = tmp_path / "raw", tmp_path / "out"
     _write_raw(raw, "a.json", [{"id": "a1", "rock_name_original": "basalt", "lon": 0.5, "lat": 0.5}])
