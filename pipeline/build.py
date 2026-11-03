@@ -1,14 +1,18 @@
 """Orquestrador incremental: fontes brutas -> geoworld.gpkg -> arquivos da web.
 
-Para cada `Source` registrada, compara o SHA-256 de `raw_dir/raw_file` com o
-registrado em `out_dir/build_state.json`. So reprocessa (chama `load`) se a
-fonte for nova, se o hash mudou ou se o cache sumiu.
+Para cada `Source` registrada, compara {SHA-256 de `raw_dir/raw_file`,
+camada} com o registrado em `out_dir/build_state.json`. So reprocessa (chama
+`load`) se a fonte for nova, se hash ou camada mudaram, se o cache falta ou
+esta ilegivel, se o estado esta no formato antigo, ou com `force=True`
+(`--force`, para quando o mapeamento de colunas de um loader muda).
 
 Cache por fonte: `out_dir/_cache/<source_id>.gpkg`, um GeoPackage com o
 esquema canonico completo (`create_geopackage`) em que so a camada da fonte
 e preenchida via `write_layer`. Assim o cache passa pela mesma validacao de
 esquema e CRS do produto final e fontes inalteradas sao remontadas sem
-chamar `load` de novo.
+chamar `load` de novo. O cache e escrito num temporario e movido para o
+lugar so apos sucesso; o estado (gravado atomicamente) so aponta para um
+cache depois que ele esta no lugar.
 
 Montagem (sempre refeita, a partir dos caches): `out_dir/geoworld.gpkg` com a
 tabela `sources` (fontes que contribuem dados) e as camadas; depois as
@@ -23,6 +27,7 @@ locais recebem apenas `load(path)`.
 """
 import argparse
 import json
+import os
 import shutil
 import sys
 from dataclasses import dataclass, field
@@ -32,6 +37,7 @@ from typing import Callable
 import geopandas as gpd
 import pandas as pd
 from pyogrio import read_dataframe
+from pyogrio.errors import DataLayerError, DataSourceError
 
 from pipeline.common.manifest import _sha256
 from pipeline.common.model import CRS, SCHEMAS, create_geopackage, write_layer
@@ -84,38 +90,78 @@ def _load_state(path: Path) -> dict:
     return {}
 
 
+def _save_state(path: Path, state: dict) -> None:
+    """Escrita atomica: arquivo temporario + os.replace."""
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def _read_cache(cache: Path, layer: str) -> gpd.GeoDataFrame | None:
+    """Camada do cache, ou None se o arquivo falta ou nao e legivel."""
+    if not cache.exists():
+        return None
+    try:
+        return read_dataframe(cache, layer=layer)
+    except (DataSourceError, DataLayerError):
+        return None
+
+
+def _write_cache(cache: Path, layer: str, gdf: gpd.GeoDataFrame) -> None:
+    """Escreve num temporario e so o move para `cache` se `write_layer` der certo."""
+    tmp = cache.with_name(cache.stem + ".tmp.gpkg")
+    try:
+        create_geopackage(tmp)
+        write_layer(tmp, layer, gdf)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+    os.replace(tmp, cache)
+
+
 def build(raw_dir: Path, out_dir: Path, sources: list[Source],
-          allow_network: bool = False, tippecanoe: str | None = None) -> BuildReport:
+          allow_network: bool = False, tippecanoe: str | None = None,
+          force: bool = False) -> BuildReport:
+    """`force=True` reprocessa todas as fontes (ex.: mapeamento do loader mudou)."""
     raw_dir, out_dir = Path(raw_dir), Path(out_dir)
     cache_dir = out_dir / "_cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
     state_path = out_dir / "build_state.json"
-    old_state = _load_state(state_path)
-    new_state: dict[str, str] = {}
+    # Estado: source_id -> {"sha256", "layer"}; formato antigo (so hash) e obsoleto.
+    state = _load_state(state_path)
     statuses: dict[str, str] = {}
     frames: dict[str, list[gpd.GeoDataFrame]] = {layer: [] for layer in LAYERS}
     contributing: list[Source] = []
 
     for src in sources:
+        sid = src.source_id
         raw = raw_dir / src.raw_file
-        if not raw.exists():
-            raise FileNotFoundError(f"{src.source_id}: arquivo bruto ausente {raw}")
-        digest = _sha256(raw)
-        cache = cache_dir / f"{src.source_id}.gpkg"
-        if old_state.get(src.source_id) == digest and cache.exists():
-            statuses[src.source_id] = "skipped"
+        cache = cache_dir / f"{sid}.gpkg"
+        digest = _sha256(raw) if raw.exists() else None
+        key = {"sha256": digest, "layer": src.layer}
+        frame = None
+        if not force and digest is not None and state.get(sid) == key:
+            frame = _read_cache(cache, src.layer)
+        if frame is not None:
+            statuses[sid] = "skipped"
         elif src.needs_network and not allow_network:
-            statuses[src.source_id] = "skipped_network"
+            statuses[sid] = "skipped_network"
             continue
+        elif digest is None:
+            raise FileNotFoundError(f"{sid}: arquivo bruto ausente {raw}")
         else:
             gdf = src.load(raw, allow_network=True) if src.needs_network else src.load(raw)
             gdf = gdf.copy()
-            gdf["source_id"] = src.source_id
-            create_geopackage(cache)
-            write_layer(cache, src.layer, gdf)
-            statuses[src.source_id] = "processed"
-        new_state[src.source_id] = digest
-        frames[src.layer].append(read_dataframe(cache, layer=src.layer))
+            gdf["source_id"] = sid
+            # o estado so volta a apontar para o cache depois que ele esta no lugar
+            state.pop(sid, None)
+            _save_state(state_path, state)
+            _write_cache(cache, src.layer, gdf)
+            state[sid] = key
+            _save_state(state_path, state)
+            frame = read_dataframe(cache, layer=src.layer)
+            statuses[sid] = "processed"
+        frames[src.layer].append(frame)
         contributing.append(src)
 
     gpkg = out_dir / "geoworld.gpkg"
@@ -137,7 +183,8 @@ def build(raw_dir: Path, out_dir: Path, sources: list[Source],
         samples = attach_units(samples, read_dataframe(gpkg, layer="geo_units"))
         write_layer(gpkg, "samples", samples)
 
-    state_path.write_text(json.dumps(new_state, indent=2), encoding="utf-8")
+    registered = {s.source_id for s in sources}
+    _save_state(state_path, {k: v for k, v in state.items() if k in registered})
     counts = {layer: len(read_dataframe(gpkg, layer=layer)) for layer in LAYERS}
     exported = export_web(gpkg, out_dir, tippecanoe)
     return BuildReport(statuses, counts, exported.files, exported.warnings)
@@ -149,6 +196,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, default=Path("data/out"))
     parser.add_argument("--allow-network", action="store_true",
                         help="permite etapas de rede (download, geocodificacao)")
+    parser.add_argument("--force", action="store_true",
+                        help="reprocessa todas as fontes, ignorando o cache")
     parser.add_argument("--tippecanoe", default=shutil.which("tippecanoe"),
                         help="caminho do tippecanoe (padrao: o do PATH)")
     args = parser.parse_args(argv)
@@ -158,7 +207,8 @@ def main(argv: list[str] | None = None) -> int:
               "A ligacao das fontes reais e parte da fase de aquisicao de dados.")
         return 0
 
-    rep = build(args.raw, args.out, SOURCES, args.allow_network, args.tippecanoe)
+    rep = build(args.raw, args.out, SOURCES, allow_network=args.allow_network,
+                tippecanoe=args.tippecanoe, force=args.force)
     for source_id, status in rep.statuses.items():
         print(f"{source_id}: {status}")
     for layer, n in rep.counts.items():

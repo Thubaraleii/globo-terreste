@@ -109,6 +109,17 @@ def test_export_without_tippecanoe_warns_and_skips_pmtiles(tmp_path):
     assert any("tippecanoe" in w for w in res.warnings)
 
 
+def test_stale_pmtiles_removed_when_tippecanoe_absent(tmp_path):
+    out = tmp_path / "web"
+    out.mkdir()
+    for layer in ("geo_units", "samples"):
+        (out / f"{layer}.pmtiles").write_bytes(b"antigo")
+    res = export_web(_gpkg(tmp_path), out, tippecanoe=None)
+    assert not (out / "geo_units.pmtiles").exists()
+    assert not (out / "samples.pmtiles").exists()
+    assert any("removid" in w and "geo_units.pmtiles" in w for w in res.warnings)
+
+
 def test_tippecanoe_command_built_without_shell(tmp_path):
     out = tmp_path / "web"
     run = FakeRunner()

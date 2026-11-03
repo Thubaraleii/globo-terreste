@@ -83,10 +83,15 @@ def export_web(gpkg: Path, out_dir: Path, tippecanoe: str | None,
         result.files.append(target)
 
     if tippecanoe is None:
-        result.warnings.append(
-            "tippecanoe nao encontrado: PMTiles de "
-            + ", ".join(PMTILES_LAYERS) + " nao gerados"
-        )
+        warning = ("tippecanoe nao encontrado: PMTiles de "
+                   + ", ".join(PMTILES_LAYERS) + " nao gerados")
+        stale = [out_dir / f"{layer}.pmtiles" for layer in PMTILES_LAYERS]
+        stale = [p for p in stale if p.exists()]
+        for p in stale:
+            p.unlink()
+        if stale:
+            warning += "; obsoletos removidos: " + ", ".join(p.name for p in stale)
+        result.warnings.append(warning)
     else:
         with tempfile.TemporaryDirectory() as tmp:
             for layer in PMTILES_LAYERS:

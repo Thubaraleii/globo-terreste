@@ -95,6 +95,84 @@ def test_build_reprocesses_when_cache_is_missing(tmp_path):
     assert rep.statuses == {"gvp": "processed"} and src.load.calls == 2
 
 
+def test_failed_cache_write_leaves_no_cache_and_next_run_reprocesses(tmp_path):
+    raw, out = tmp_path / "raw", tmp_path / "out"
+    src = _volcano_source(raw)
+    build(raw, out, [src])
+    (out / "_cache" / "gvp.gpkg").unlink()  # hash inalterado, cache sumiu
+    good = src.load
+
+    def bad(path, **kwargs):
+        gdf = good(path, **kwargs)
+        gdf["fora_do_esquema"] = 1
+        return gdf
+
+    src.load = bad
+    with pytest.raises(ValueError, match="fora_do_esquema"):
+        build(raw, out, [src])
+    assert list((out / "_cache").iterdir()) == []
+    src.load = good
+    rep = build(raw, out, [src])
+    assert rep.statuses == {"gvp": "processed"}
+    assert rep.counts["volcanoes"] == 1
+
+
+def test_unreadable_cache_is_reprocessed(tmp_path):
+    raw, out = tmp_path / "raw", tmp_path / "out"
+    src = _volcano_source(raw)
+    build(raw, out, [src])
+    (out / "_cache" / "gvp.gpkg").write_bytes(b"lixo")
+    rep = build(raw, out, [src])
+    assert rep.statuses == {"gvp": "processed"} and rep.counts["volcanoes"] == 1
+
+
+def test_changed_layer_is_reprocessed(tmp_path):
+    raw, out = tmp_path / "raw", tmp_path / "out"
+    _write_raw(raw, "pts.json", [{"lon": 1.0, "lat": 2.0}])
+    build(raw, out, [Source("pts", "pts.json", "volcanoes", Loader("volcanoes"))])
+    moved = Source("pts", "pts.json", "samples", Loader("samples"))
+    rep = build(raw, out, [moved])
+    assert rep.statuses == {"pts": "processed"} and moved.load.calls == 1
+    assert rep.counts["samples"] == 1 and rep.counts["volcanoes"] == 0
+    state = json.loads((out / "build_state.json").read_text(encoding="utf-8"))
+    assert state["pts"]["layer"] == "samples"
+
+
+def test_old_format_state_is_reprocessed(tmp_path):
+    raw, out = tmp_path / "raw", tmp_path / "out"
+    src = _volcano_source(raw)
+    build(raw, out, [src])
+    state_path = out / "build_state.json"
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state_path.write_text(json.dumps({"gvp": state["gvp"]["sha256"]}), encoding="utf-8")
+    rep = build(raw, out, [src])
+    assert rep.statuses == {"gvp": "processed"} and src.load.calls == 2
+
+
+def test_force_reprocesses_everything(tmp_path):
+    raw, out = tmp_path / "raw", tmp_path / "out"
+    src = _volcano_source(raw)
+    build(raw, out, [src])
+    rep = build(raw, out, [src], force=True)
+    assert rep.statuses == {"gvp": "processed"} and src.load.calls == 2
+
+
+def test_cli_force_flag_is_passed(tmp_path, monkeypatch):
+    seen = {}
+    monkeypatch.setattr(build_mod, "SOURCES", [object()])
+    monkeypatch.setattr(build_mod, "build", lambda *a, **kw: seen.update(kw) or
+                        build_mod.BuildReport({}, {}, [], []))
+    assert build_mod.main(["--raw", "r", "--out", "o", "--force"]) == 0
+    assert seen["force"] is True
+
+
+def test_network_source_with_missing_raw_is_skipped_network(tmp_path):
+    net = Source("geo", "ainda_nao_baixado.json", "samples", Loader("samples"),
+                 needs_network=True)
+    rep = build(tmp_path / "raw", tmp_path / "out", [net])
+    assert rep.statuses == {"geo": "skipped_network"}
+
+
 def test_missing_raw_file_raises(tmp_path):
     src = Source("x", "nao_existe.json", "volcanoes", Loader("volcanoes"))
     with pytest.raises(FileNotFoundError, match="nao_existe.json"):
