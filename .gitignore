@@ -8,3 +8,4 @@ node_modules/
 web/data/
 test-results/
 playwright-report/
+data/out/
