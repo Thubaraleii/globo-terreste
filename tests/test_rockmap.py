@@ -76,3 +76,31 @@ def test_v2_adds_georoc_names_and_nothing_else():
                                   "lherzolite, spinel, xenolith"])
 def test_v2_does_not_classify_unlisted_names(name):
     assert classify_rock(name, load_mapping(CSV_V2)) is None
+
+
+# --- mapeamento v3 (v2 + nomes qualificados por mineral) ----------------------
+
+CSV_V3 = CSV.with_name("rock_mapping_v3.csv")
+
+
+def test_v3_keeps_every_v2_row_and_only_adds_qualified_names():
+    v2, v3 = load_mapping(CSV_V2), load_mapping(CSV_V3)
+    assert {k: v3.get(k) for k in v2} == v2
+    added = {k: c for k, c in v3.items() if k not in v2}
+    assert len(added) > 100
+    for name, cls in added.items():
+        root, _, qualifier = name.partition(",")
+        assert qualifier.strip(), name           # so "raiz, mineral"
+        assert v2.get(root.strip()) == cls, name  # classe = a da raiz, que ja estava no v2
+        assert "xenolith" not in name and " / " not in name and "[" not in name, name
+
+
+def test_v3_has_the_expected_examples_and_excludes_xenoliths():
+    v3 = load_mapping(CSV_V3)
+    assert v3["basalt, olivine"] == "mafic"
+    assert v3["gabbro, hornblende"] == "mafic"
+    assert v3["basalt, olivine-augite"] == "mafic"
+    assert v3["pyroxenite, olivine"] == "ultramafic"
+    assert v3["lherzolite, spinel"] == "ultramafic"
+    assert "peridotite, xenolith" not in v3 and "lherzolite, spinel, xenolith" not in v3
+    assert "basalt, olivine / gabbro" not in v3

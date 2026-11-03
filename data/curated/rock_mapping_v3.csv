@@ -1,0 +1,538 @@
+name,class
+basalto,mafic
+basalt,mafic
+gabro,mafic
+gabbro,mafic
+diabasio,mafic
+diabase,mafic
+dolerite,mafic
+peridotito,ultramafic
+peridotite,ultramafic
+dunito,ultramafic
+dunite,ultramafic
+piroxenito,ultramafic
+pyroxenite,ultramafic
+komatiito,ultramafic
+komatiite,ultramafic
+alkali basalt,mafic
+tholeiitic basalt,mafic
+transitional basalt,mafic
+subalkali basalt,mafic
+calc-alkali basalt,mafic
+picrobasalt,mafic
+trachybasalt,mafic
+basanite,mafic
+ankaramite,mafic
+gabbronorite,mafic
+norite,mafic
+harzburgite,ultramafic
+lherzolite,ultramafic
+wehrlite,ultramafic
+websterite,ultramafic
+clinopyroxenite,ultramafic
+orthopyroxenite,ultramafic
+"basalt, olivine",mafic
+"alkali basalt, olivine",mafic
+"tholeiitic basalt, olivine",mafic
+"gabbro, olivine",mafic
+"gabbro, hornblende",mafic
+"gabbronorite, olivine",mafic
+"tholeiitic basalt, quartz",mafic
+"pyroxenite, olivine",ultramafic
+"pyroxenite, feldspar",ultramafic
+"basanite, nepheline",mafic
+"basalt, plagioclase",mafic
+"basalt, augite-olivine",mafic
+"basalt, olivine-clinopyroxene",mafic
+"dolerite, olivine",mafic
+"basalt, olivine-augite",mafic
+"basanite, leucite",mafic
+"lherzolite, plagioclase",ultramafic
+"basalt, clinopyroxene-olivine",mafic
+"clinopyroxenite, olivine",ultramafic
+"pyroxenite, garnet",ultramafic
+"gabbro, quartz",mafic
+"lherzolite, spinel",ultramafic
+"gabbro, amphibole",mafic
+"gabbronorite, hornblende",mafic
+"websterite, olivine",ultramafic
+"basalt, plagioclase-olivine",mafic
+"basalt, andesine",mafic
+"basalt, amphibole",mafic
+"gabbro, magnetite",mafic
+"dolerite, quartz",mafic
+"basalt, pyroxene",mafic
+"basalt, olivine-plagioclase-clinopyroxene",mafic
+"dolerite, hornblende",mafic
+"basalt, augite",mafic
+"gabbro, apatite",mafic
+"basalt, pyroxene-olivine",mafic
+"gabbro, clinopyroxene",mafic
+"basalt, clinopyroxene",mafic
+"gabbro, pyroxene-hornblende",mafic
+"trachybasalt, olivine",mafic
+"basalt, nepheline",mafic
+"gabbro, pyroxene",mafic
+"basalt, hornblende",mafic
+"basalt, 2-pyroxene",mafic
+"gabbro, hornblende-biotite",mafic
+"tholeiitic basalt, hypersthene",mafic
+"basalt, plagioclase-olivine-clinopyroxene",mafic
+"basalt, hypersthene",mafic
+"orthopyroxenite, olivine",ultramafic
+"basanite, hornblende",mafic
+"gabbro, biotite",mafic
+"basalt, labradorite",mafic
+"tholeiitic basalt, pigeonite",mafic
+"basalt, feldspar",mafic
+"basalt, olivine-plagioclase",mafic
+"basalt, olivine-pyroxene",mafic
+"basanite, analcime",mafic
+"pyroxenite, plagioclase",ultramafic
+"pyroxenite, phlogopite",ultramafic
+"basalt, augite-hypersthene",mafic
+"peridotite, plagioclase",ultramafic
+"basanite, olivine",mafic
+"clinopyroxenite, apatite-magnetite",ultramafic
+"pyroxenite, amphibole",ultramafic
+"clinopyroxenite, magnetite-olivine",ultramafic
+"pyroxenite, biotite",ultramafic
+"basalt, hypersthene-augite-olivine",mafic
+"clinopyroxenite, garnet",ultramafic
+"gabbro, clinopyroxene-hornblende",mafic
+"basalt, amphibole-pyroxene",mafic
+"basalt, olivine-clinopyroxene-plagioclase",mafic
+"clinopyroxenite, orthoclase",ultramafic
+"gabbro, augite",mafic
+"gabbro, garnet",mafic
+"gabbronorite, biotite",mafic
+"harzburgite, amphibole",ultramafic
+"pyroxenite, hornblende",ultramafic
+"trachybasalt, nepheline",mafic
+"clinopyroxenite, biotite",ultramafic
+"clinopyroxenite, magnetite",ultramafic
+"basalt, hypersthene-olivine",mafic
+"norite, olivine",mafic
+"basalt, pyroxene-plagioclase",mafic
+"basalt, olivine-augite-hypersthene",mafic
+"dolerite, olivine-clinopyroxene",mafic
+"gabbronorite, quartz",mafic
+"gabbro, biotite-hornblende",mafic
+"basalt, augite-hypersthene-olivine",mafic
+"dolerite, clinopyroxene",mafic
+"gabbro, hornblende-hypersthene-augite-quartz",mafic
+"peridotite, hornblende",ultramafic
+"pyroxenite, plagioclase-olivine",ultramafic
+"gabbro, hypersthene",mafic
+"gabbronorite, biotite-amphibole-olivine",mafic
+"tholeiitic basalt, plagioclase",mafic
+"websterite, plagioclase",ultramafic
+"basalt, augite-olivine-plagioclase",mafic
+"dolerite, orthopyroxene-clinopyroxene",mafic
+"dolerite, augite-olivine",mafic
+"gabbro, plagioclase-clinopyroxene",mafic
+"peridotite, amphibole",ultramafic
+"trachybasalt, leucite",mafic
+"basalt, olivine-melilite",mafic
+"gabbro, hypersthene-hornblende",mafic
+"gabbronorite, amphibole",mafic
+"gabbro, scapolite",mafic
+"gabbronorite, garnet",mafic
+"peridotite, pyroxene",ultramafic
+"peridotite, garnet",ultramafic
+"basalt, 2-pyroxene-olivine",mafic
+"basanite, clinopyroxene-olivine",mafic
+"clinopyroxenite, hornblende",ultramafic
+"gabbro, olivine-magnetite",mafic
+"trachybasalt, titanaugite-olivine",mafic
+"wehrlite, apatite",ultramafic
+"basalt, quartz",mafic
+"basalt, plagioclase-amphibole",mafic
+"basalt, hypersthene-augite-olivine-plagioclase",mafic
+"basalt, olivine-hypersthene",mafic
+"basalt, orthopyroxene-clinopyroxene-plagioclase",mafic
+"basalt, augite-pigeonite-bronzite",mafic
+"basanite, amphibole",mafic
+"dunite, plagioclase",ultramafic
+"gabbro, cummingtonite-hornblende",mafic
+"gabbro, olivine-pyroxene",mafic
+"gabbronorite, pyroxene-hornblende",mafic
+"gabbro, kaersutite",mafic
+"norite, olivine-hornblende",mafic
+"norite, hornblende",mafic
+"pyroxenite, orthoclase",ultramafic
+"trachybasalt, phlogopite",mafic
+"websterite, amphibole",ultramafic
+"websterite, spinel",ultramafic
+"alkali basalt, hornblende",mafic
+"ankaramite, hornblende",mafic
+"basalt, pyroxene-amphibole",mafic
+"basalt, leucite",mafic
+"basanite, olivine-clinopyroxene",mafic
+"dolerite, olivine-augite",mafic
+"gabbro, 2-pyroxene",mafic
+"gabbro, hypersthene-augite",mafic
+"gabbro, olivine-biotite-clinopyroxene",mafic
+"gabbro, apatite-olivine",mafic
+"norite, quartz",mafic
+"orthopyroxenite, plagioclase",ultramafic
+"peridotite, pyroxene-hornblende",ultramafic
+"pyroxenite, olivine-hornblende",ultramafic
+"trachybasalt, hypersthene",mafic
+"websterite, olivine-plagioclase",ultramafic
+"basalt, bronzite",mafic
+"basalt, olivine-orthopyroxene-clinopyroxene",mafic
+"basalt, nepheline-melilite",mafic
+"basanite, analcime-nepheline",mafic
+"basanite, pyroxene",mafic
+"gabbro, pyroxene-amphibole",mafic
+"gabbro, hornblende-2-pyroxene",mafic
+"harzburgite, spinel",ultramafic
+"pyroxenite, augite",ultramafic
+"peridotite, amphibole-plagioclase",ultramafic
+"trachybasalt, sodalite",mafic
+"basalt, clinopyroxene-plagioclase",mafic
+"basalt, olivine-pyroxene-plagioclase",mafic
+"basalt, augite-plagioclase",mafic
+"basalt, olivine-andesine",mafic
+"basalt, olivine-bytownite",mafic
+"basalt, clinopyroxene-olivine-plagioclase",mafic
+"basanite, nepheline-leucite",mafic
+"dolerite, olivine-analcime",mafic
+"dunite, amphibole",ultramafic
+"gabbro, magnetite-olivine",mafic
+"gabbro, olivine-augite",mafic
+"gabbro, olivine-clinopyroxene",mafic
+"gabbro, 2-pyroxene-hornblende",mafic
+"pyroxenite, mica",ultramafic
+"basalt, augite-hypersthene-olivine-plagioclase",mafic
+"basalt, augite-olivine-bytownite",mafic
+"basalt, oligoclase",mafic
+"basalt, plagioclase-pyroxene",mafic
+"basalt, augite-hypersthene-bytownite",mafic
+"basalt, bronzite-olivine",mafic
+"basalt, olivine-augite-labradorite",mafic
+"basanite, pyroxene-olivine",mafic
+"basanite, nepheline-analcime",mafic
+"dolerite, 2-pyroxene",mafic
+"dolerite, pyroxene",mafic
+"dolerite, analcime",mafic
+"dolerite, pigeonite",mafic
+"dolerite, augite-hornblende",mafic
+"gabbro, hornblende-quartz",mafic
+"gabbro, biotite-amphibole",mafic
+"gabbro, pyroxene-olivine",mafic
+"gabbro, orthopyroxene",mafic
+"gabbro, hornblende-clinopyroxene",mafic
+"gabbro, oligoclase",mafic
+"gabbro, olivine-hornblende",mafic
+"lherzolite, spinel-plagioclase",ultramafic
+"peridotite, mica",ultramafic
+"peridotite, monticellite",ultramafic
+"wehrlite, amphibole-plagioclase",ultramafic
+"alkali basalt, titanaugite-olivine",mafic
+"alkali basalt, olivine-plagioclase-clinopyroxene",mafic
+"basalt, melilite",mafic
+"basalt, amphibole-plagioclase",mafic
+"basalt, hypersthene-augite-plagioclase",mafic
+"basalt, olivine-augite-hypersthene-plagioclase",mafic
+"basalt, olivine-hypersthene-augite",mafic
+"basalt, clinopyroxene-orthopyroxene-olivine",mafic
+"basalt, hypersthene-augite",mafic
+"basalt, hypersthene-augite-pigeonite",mafic
+"basalt, plagioclase-augite",mafic
+"basalt, pyroxene-olivine-amphibole",mafic
+"basalt, bronzite-augite-olivine",mafic
+"basalt, olivine-bronzite-pigeonite",mafic
+"basalt, biotite-hauyn",mafic
+"basalt, clinopyroxene-kaersutite",mafic
+"basalt, olivine-labradorite",mafic
+"basalt, amphibole-olivine-clinopyroxene",mafic
+"basanite, plagioclase",mafic
+"basanite, clinopyroxene",mafic
+"clinopyroxenite, spinel",ultramafic
+"clinopyroxenite, garnet-hornblende",ultramafic
+"clinopyroxenite, perovskite",ultramafic
+"dolerite, augite",mafic
+"dolerite, ilmenite",mafic
+"dolerite, titanomagnetite",mafic
+"dolerite, hypersthene",mafic
+"dolerite, plagioclase-amphibole",mafic
+"dolerite, bronzite",mafic
+"gabbro, plagioclase",mafic
+"gabbro, biotite-cummingtonite-hornblende",mafic
+"gabbro, hornblende-pyroxene",mafic
+"gabbro, olivine-augite-hornblende-biotite",mafic
+"gabbro, olivine-augite-hornblende",mafic
+"gabbro, olivine-pyroxene-hornblende",mafic
+"gabbro, clinopyroxene-biotite-hornblende-quartz",mafic
+"gabbro, clinopyroxene-biotite",mafic
+"gabbro, analcime",mafic
+"gabbro, cummingtonite-biotite-hornblende",mafic
+"gabbro, oxyhornblende",mafic
+"gabbro, augite-hypersthene-olivine",mafic
+"gabbro, apatite-ilmenite",mafic
+"komatiite, tremolite-pyroxene",ultramafic
+"peridotite, orthopyroxene-hornblende",ultramafic
+"pyroxenite, tremolite",ultramafic
+"pyroxenite, pyroxene",ultramafic
+"trachybasalt, amphibole",mafic
+"trachybasalt, hornblende",mafic
+"trachybasalt, olivine-andesine",mafic
+"websterite, feldspar",ultramafic
+"wehrlite, plagioclase",ultramafic
+"tholeiitic basalt, clinopyroxene-olivine",mafic
+"basalt, olivine-anorthite",mafic
+"basalt, olivine-hypersthene-augite-plagioclase",mafic
+"basalt, olivine-augite-plagioclase",mafic
+"basalt, augite-hypersthene-plagioclase",mafic
+"basalt, bronzite-augite-plagioclase",mafic
+"basalt, pigeonite-augite-olivine",mafic
+"basalt, plagioclase-clinopyroxene",mafic
+"basalt, orthopyroxene-clinopyroxene-olivine",mafic
+"basalt, augite-amphibole",mafic
+"basalt, plagioclase-augite-olivine",mafic
+"basalt, kaersutite",mafic
+"basalt, orthopyroxene",mafic
+"basalt, melilite-nepheline",mafic
+"basalt, pyroxene-plagioclase-olivine",mafic
+"basalt, hornblende-leucite",mafic
+"basalt, olivine-clinopyroxene-orthopyroxene",mafic
+"basalt, bronzite-olivine-pigeonite",mafic
+"basalt, olivine-clinopyroxene-orthopyroxene-plagioclase",mafic
+"basalt, olivine-2-pyroxene-plagioclase",mafic
+"basalt, labradorite-olivine",mafic
+"basalt, olivine-bronzite",mafic
+"basanite, salite-olivine",mafic
+"clinopyroxenite, kaersutite",ultramafic
+"clinopyroxenite, amphibole",ultramafic
+"dolerite, 2-pyroxene-olivine",mafic
+"dolerite, olivine-augite-hypersthene",mafic
+"dolerite, amphibole",mafic
+"dolerite, pyroxene-olivine",mafic
+"dolerite, analcite",mafic
+"dolerite, albite",mafic
+"dunite, orthopyroxene-clinopyroxene",ultramafic
+"dunite, feldspar",ultramafic
+"gabbro, hornblende-orthopyroxene-clinopyroxene",mafic
+"gabbro, kalifeldspar",mafic
+"gabbro, olivine-pigeonite-hypersthene",mafic
+"gabbro, pigeonite-hypersthene-quartz",mafic
+"gabbro, hypersthene-pigeonite-quartz",mafic
+"gabbro, biotite-orthopyroxene-cummingtonite-clinopyroxene-hornblende",mafic
+"gabbro, biotite-clinopyroxene-cummingtonite-hornblende",mafic
+"gabbro, quartz-hypersthene",mafic
+"gabbro, hornblende-biotite-olivine-clinopyroxene",mafic
+"gabbro, orthopyroxene-hornblende-biotite-olivine-clinopyroxene",mafic
+"gabbro, biotite-orthopyroxene-clinopyroxene",mafic
+"gabbro, olivine-clinopyroxene-hornblende",mafic
+"gabbro, augite-olivine",mafic
+"gabbro, anorthoclase",mafic
+"gabbro, olivine-2-pyroxene",mafic
+"gabbro, garnet-amphibole",mafic
+"gabbro, clinopyroxene-olivine",mafic
+"gabbro, biotite-augite",mafic
+"gabbro, orthopyroxene-biotite",mafic
+"gabbro, hypersthene-pigeonite-augite",mafic
+"gabbro, pigeonite-augite",mafic
+"komatiite, pyroxene",ultramafic
+"komatiite, tremolite",ultramafic
+"lherzolite, garnet",ultramafic
+"norite, amphibole",mafic
+"norite, hornblende-olivine",mafic
+"norite, biotite",mafic
+"norite, clinopyroxene",mafic
+"peridotite, enstatite-diopside",ultramafic
+"peridotite, plagioclase-pyroxene",ultramafic
+"pyroxenite, titanite",ultramafic
+"pyroxenite, olivine-mica",ultramafic
+"pyroxenite, perovskite-apatite",ultramafic
+"pyroxenite, anorthoclase",ultramafic
+"pyroxenite, pyrope",ultramafic
+"tholeiitic basalt, augite-olivine",mafic
+"trachybasalt, olivine-clinopyroxene",mafic
+"trachybasalt, quartz",mafic
+"trachybasalt, augite-olivine",mafic
+"trachybasalt, labradorite-olivine",mafic
+"websterite, amphibole-olivine",ultramafic
+"alkali basalt, salite-olivine",mafic
+"alkali basalt, analcime",mafic
+"alkali basalt, olivine-augite",mafic
+"alkali basalt, labradorite-andesine",mafic
+"alkali basalt, clinopyroxene-olivine",mafic
+"alkali basalt, clinopyroxene",mafic
+"basalt, olivine-2-pyroxene",mafic
+"basalt, augite-bronzite",mafic
+"basalt, olivine-pigeonite-augite",mafic
+"basalt, olivine-augite-orthopyroxene",mafic
+"basalt, augite-orthopyroxene-olivine",mafic
+"basalt, augite-orthopyroxene",mafic
+"basalt, olivine-amphibole",mafic
+"basalt, pigeonite-bronzite-augite-olivine",mafic
+"basalt, orthopyroxene-olivine-clinopyroxene",mafic
+"basalt, olivine-nepheline",mafic
+"basalt, phlogopite-clinopyroxene-olivine-plagioclase",mafic
+"basalt, phlogopite-clinopyroxene-olivine",mafic
+"basalt, enstatite",mafic
+"basalt, clinopyroxene-hypersthene",mafic
+"basalt, plagioclase-biotite",mafic
+"basalt, clinopyroxene-orthopyroxene",mafic
+"basalt, pyroxene-olivine-plagioclase",mafic
+"basalt, plagioclase-andesine",mafic
+"basalt, bronzite-augite-pigeonite",mafic
+"basalt, olivine-hypersthene-labradorite",mafic
+"basalt, analcime",mafic
+"basalt, olivine-augite-andesine",mafic
+"basalt, hornblende-andesine",mafic
+"basalt, olivine-oligoclase",mafic
+"basalt, nepheline-olivine",mafic
+"basalt, olivine-feldspar",mafic
+"basalt, hornblende-orthopyroxene",mafic
+"basalt, biotite-hornblende",mafic
+"basalt, biotite",mafic
+"basalt, orthopyroxene-clinopyroxene- olivine",mafic
+"basalt, clinopyroxene-amphibole",mafic
+"basalt, olivine-clinopyroxene-hornblende",mafic
+"basalt, augite-hornblende",mafic
+"basalt, hornblende-plagioclase",mafic
+"basalt, augite-pigeonite-bronzite-olivine",mafic
+"basalt, augite-labradorite",mafic
+"basalt, olivine-orthopyroxene",mafic
+"basalt, hypersthene-olivine-augite",mafic
+"basalt, augite-olivine-labradorite",mafic
+"basalt, hypersthene-pigeonite",mafic
+"basalt, olivine-spinel",mafic
+"basalt, augite-hypersthene-hornblende",mafic
+"basalt, hypersthene-anorthite",mafic
+"basalt, hornblende-augite-hypersthene-olivine",mafic
+"basalt, bytownite",mafic
+"basalt, hypersthene-augite-olivine-bytownite",mafic
+"basalt, 2-pyroxene-olivine-bytownite",mafic
+"basanite, nosean",mafic
+"basanite, hauyne",mafic
+"basanite, sanidine",mafic
+"basanite, aegirine",mafic
+"clinopyroxenite, phlogopite",ultramafic
+"clinopyroxenite, olivine-hornblende",ultramafic
+"clinopyroxenite, olivine-garnet",ultramafic
+"clinopyroxenite, olivine-plagioclase",ultramafic
+"clinopyroxenite, apatite",ultramafic
+"clinopyroxenite, plagioclase",ultramafic
+"clinopyroxenite, biotite-olivine",ultramafic
+"clinopyroxenite, olivine-orthopyroxene",ultramafic
+"dolerite, clinopyroxene-olivine",mafic
+"dolerite, olivine-clinopyroxene-plagioclase",mafic
+"dolerite, hornblende-biotite-pigeonite-augite-hypersthene",mafic
+"dolerite, analcime-titansalite-kaersutite",mafic
+"dolerite, augite-hypersthene-quartz",mafic
+"dolerite, oligoclase",mafic
+"dolerite, kaersutite",mafic
+"dolerite, hyalosiderite",mafic
+"dolerite, hornblende-augite",mafic
+"dunite, garnet",ultramafic
+"dunite, clinohumite",ultramafic
+"dunite, amphibole-pyroxene",ultramafic
+"dunite, pyroxene",ultramafic
+"dunite, clinopyroxene",ultramafic
+"dunite, chromite",ultramafic
+"dunite, spinel",ultramafic
+"gabbro, augite-hypersthene-hornblende",mafic
+"gabbro, hornblende-hypersthene",mafic
+"gabbro, olivine-hornblende-magnetite",mafic
+"gabbro, orthopyroxene-hornblende",mafic
+"gabbro, olivine-augite-apatite-kaersutite",mafic
+"gabbro, augite-cummingtonite-orthopyroxene-hornblende",mafic
+"gabbro, augite-orthopyroxene-hornblende",mafic
+"gabbro, mica",mafic
+"gabbro, plagioclase-biotite",mafic
+"gabbro, hornblende-plagioclase",mafic
+"gabbro, augite-hornblende",mafic
+"gabbro, olivine-diopside-bronzite-hornblende",mafic
+"gabbro, biotite-hornblende-hypersthene-augite",mafic
+"gabbro, biotite-hypersthene-augite-hornblende",mafic
+"gabbro, quartz-biotite-hornblende-hypersthene-augite",mafic
+"gabbro, quartz-biotite-hornblende-hypersthene-augite-pigeonite",mafic
+"gabbro, olivine-bronzite-salite",mafic
+"gabbro, bronzite-salite",mafic
+"gabbro, hornblende-augite-olivine",mafic
+"gabbro, biotite-cummingtonite-hornblende-quartz",mafic
+"gabbro, hypersthene-quartz",mafic
+"gabbro, olivine-hypersthene",mafic
+"gabbro, olivine-hypersthene-quartz",mafic
+"gabbro, orthopyroxene-clinopyroxene-hornblende",mafic
+"gabbro, orthopyroxene-biotite-clinopyroxene",mafic
+"gabbro, biotite-olivine-hornblende-augite",mafic
+"gabbro, olivine-orthopyroxene-clinopyroxene-biotite-hornblende",mafic
+"gabbro, clinopyroxene-orthopyroxene-biotite-hornblende",mafic
+"gabbro, olivine-bronzite",mafic
+"gabbro, hornblende-olivine",mafic
+"gabbro, clinopyroxene-amphibole",mafic
+"gabbro, melanite",mafic
+"gabbro, quartz-clinopyroxene-biotite-hornblende",mafic
+"gabbro, orthopyroxene-olivine-clinopyroxene-cummingtonite-hornblende",mafic
+"gabbro, clinopyroxene-biotite-cummingtonite-hornblende",mafic
+"gabbro, biotite-clinopyroxene-cummingtonite-hornblende-orthopyroxene",mafic
+"gabbro, clinopyroxene-orthopyroxene-biotite-hornblende-quartz",mafic
+"gabbro, biotite-clinopyroxene-hornblende",mafic
+"gabbro, biotite-clinopyroxene",mafic
+"gabbro, ilmenite-apatite",mafic
+"gabbro, olivine-amphibole",mafic
+"gabbro, plagioclase-augite",mafic
+"gabbro, aegirine-kaersutite-titanbiotite-titansalite",mafic
+"gabbro, biotite-hornblende-2-pyroxene",mafic
+"gabbro, biotite-orthopyroxene",mafic
+"gabbro, spinel-olivine",mafic
+"gabbro, olivine-pyroxene-biotite",mafic
+"gabbro, phlogopite",mafic
+"gabbro, augite-hypersthene",mafic
+"harzburgite, garnet",ultramafic
+"harzburgite, phlogopite",ultramafic
+"lherzolite, phlogopite-plagioclase",ultramafic
+"norite, olivine-hypersthene-hornblende",mafic
+"norite, amphibole-olivine",mafic
+"norite, amphibole-quartz",mafic
+"norite, amphibole-pyroxene",mafic
+"norite, pyroxene-amphibole",mafic
+"norite, biotite-augite",mafic
+"norite, apatite",mafic
+"orthopyroxenite, tremolite",ultramafic
+"orthopyroxenite, olivine-hornblende",ultramafic
+"orthopyroxenite, hornblende",ultramafic
+"peridotite, clinopyroxene",ultramafic
+"peridotite, enstatite",ultramafic
+"peridotite, augite-kaersutite",ultramafic
+"pyroxenite, garnet-plagioclase",ultramafic
+"pyroxenite, anorthite",ultramafic
+"pyroxenite, apatite",ultramafic
+"pyroxenite, olivine-biotite",ultramafic
+"pyroxenite, magnetite",ultramafic
+"pyroxenite, olivine-plagioclase",ultramafic
+"pyroxenite, spinel",ultramafic
+"pyroxenite, plagioclase-garnet",ultramafic
+"pyroxenite, apatite-biotite",ultramafic
+"tholeiitic basalt, pyroxene-olivine-plagioclase",mafic
+"tholeiitic basalt, augite-bronzite",mafic
+"tholeiitic basalt, bronzite",mafic
+"tholeiitic basalt, bronzite-augite",mafic
+"tholeiitic basalt, olivine-augite",mafic
+"tholeiitic basalt, pyroxene-plagioclase",mafic
+"tholeiitic basalt, pyroxene",mafic
+"trachybasalt, clinopyroxene-olivine",mafic
+"trachybasalt, olivine- clinopyroxene",mafic
+"trachybasalt, olivine-titanaugite",mafic
+"trachybasalt, plagioclase",mafic
+"trachybasalt, andesine",mafic
+"trachybasalt, augite-hornblende",mafic
+"trachybasalt, kaersutite",mafic
+"trachybasalt, olivine-augite",mafic
+"trachybasalt, olivine-biotite",mafic
+"trachybasalt, olivine-labradorite",mafic
+"trachybasalt, augite-labradorite-olivine",mafic
+"trachybasalt, olivine-olivine",mafic
+"websterite, garnet",ultramafic
+"websterite, biotite-olivine",ultramafic
+"websterite, olivine, garnet",ultramafic
+"websterite, olivine-orthopyroxene",ultramafic
+"wehrlite, feldspar",ultramafic
+"wehrlite, magnetite",ultramafic
+"wehrlite, plagioclase-spinel",ultramafic
