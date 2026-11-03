@@ -11,14 +11,15 @@ from pipeline.common.geom import repair_geometries, to_wgs84
 from pipeline.common.model import SCHEMAS
 from pipeline.samples import is_blank
 
-# PROVISORIO: nomes de coluna do arquivo GLiM real ainda nao conferidos;
-# verificar contra o arquivo na aquisicao dos dados. Coluna da fonte ->
-# nome logico (`code` = classe litologica de primeiro nivel "xx";
-# `id` opcional = identificador proprio da fonte).
+# Conferido em 2026-11-03 no LiMW_GIS 2015.gdb (camada GLiM_export, campos
+# IDENTITY_, Litho, xx). Coluna da fonte -> nome logico (`code` = classe
+# litologica de primeiro nivel "xx"; `id` opcional = identificador proprio da
+# fonte). IDENTITY_ NAO e unico (e tem nulos), entao nao e usado como id; o
+# loader real (pipeline.realsources) passa o FID do arquivo como `id`.
 GLIM_COLUMNS: dict[str, str] = {"xx": "code"}
 
-# PROVISORIO: codigos de primeiro nivel do GLiM conforme lembrados da
-# documentacao (Hartmann & Moosdorf 2012); verificar na aquisicao.
+# Codigos de primeiro nivel do GLiM (Hartmann & Moosdorf 2012). Os 16 codigos
+# distintos de `xx` no arquivo real (2026-11-03) sao exatamente estes.
 GLIM_CLASSES: dict[str, str] = {
     "su": "unconsolidated_sediments",
     "ss": "siliciclastic_sedimentary",
