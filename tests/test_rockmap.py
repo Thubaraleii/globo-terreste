@@ -48,3 +48,31 @@ def test_load_mapping_rejects_conflicting_duplicates(tmp_path):
     p.write_text("name,class\nBasalto,mafic\nbasalto,ultramafic\n", encoding="utf-8")
     with pytest.raises(ValueError, match="basalto"):
         load_mapping(p)
+
+
+# --- mapeamento v2 (proposto; nomes do GEOROC) -------------------------------
+
+CSV_V2 = CSV.with_name("rock_mapping_v2.csv")
+
+V2_MAFIC = ["alkali basalt", "tholeiitic basalt", "transitional basalt", "subalkali basalt",
+            "calc-alkali basalt", "picrobasalt", "trachybasalt", "basanite", "ankaramite",
+            "gabbronorite", "norite"]
+V2_ULTRAMAFIC = ["harzburgite", "lherzolite", "wehrlite", "websterite",
+                 "clinopyroxenite", "orthopyroxenite"]
+
+
+def test_v2_keeps_every_v1_row():
+    v1, v2 = load_mapping(CSV), load_mapping(CSV_V2)
+    assert {k: v2.get(k) for k in v1} == v1
+
+
+def test_v2_adds_georoc_names_and_nothing_else():
+    v1, v2 = load_mapping(CSV), load_mapping(CSV_V2)
+    added = {k: v for k, v in v2.items() if k not in v1}
+    assert added == {**{n: "mafic" for n in V2_MAFIC}, **{n: "ultramafic" for n in V2_ULTRAMAFIC}}
+
+
+@pytest.mark.parametrize("name", ["picrite", "oceanite", "hawaiite", "basaltic-andesite",
+                                  "lherzolite, spinel, xenolith"])
+def test_v2_does_not_classify_unlisted_names(name):
+    assert classify_rock(name, load_mapping(CSV_V2)) is None
