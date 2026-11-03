@@ -6,7 +6,8 @@ camada} com o registrado em `out_dir/build_state.json`. So reprocessa (chama
 esta ilegivel, se o estado esta no formato antigo, ou com `force=True`
 (`--force`, para quando o mapeamento de colunas de um loader muda).
 
-Cache por fonte: `out_dir/_cache/<source_id>.gpkg`, um GeoPackage com o
+Cache por fonte: `out_dir/_cache/<source_id>.gpkg` (id com caracteres
+fora de [A-Za-z0-9._-] vira nome seguro, ver `_cache_name`), um GeoPackage com o
 esquema canonico completo (`create_geopackage`) em que so a camada da fonte
 e preenchida via `write_layer`. Assim o cache passa pela mesma validacao de
 esquema e CRS do produto final e fontes inalteradas sao remontadas sem
@@ -32,8 +33,10 @@ permissao fica `skipped_network` (dados antigos dela nao entram). Fontes
 locais recebem apenas `load(path)`.
 """
 import argparse
+import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 from dataclasses import dataclass, field
@@ -130,6 +133,16 @@ def _jsonable(v):
     return str(v)
 
 
+def _cache_name(source_id: str) -> str:
+    """Nome de arquivo seguro para o cache da fonte: caracteres fora de
+    [A-Za-z0-9._-] viram '_' (':' no Windows abriria um fluxo alternativo do
+    NTFS) e um sufixo do hash do id evita colisao ('a:b' x 'a_b')."""
+    safe = re.sub(r"[^A-Za-z0-9._-]", "_", source_id)
+    if safe == source_id:
+        return source_id
+    return f"{safe}-{hashlib.sha256(source_id.encode('utf-8')).hexdigest()[:8]}"
+
+
 def _notes_path(cache: Path) -> Path:
     return cache.with_name(cache.stem + ".notes.json")
 
@@ -203,7 +216,7 @@ def build(raw_dir: Path, out_dir: Path, sources: list[Source],
     for src in sources:
         sid = src.source_id
         raw = raw_dir / src.raw_file
-        cache = cache_dir / f"{sid}.gpkg"
+        cache = cache_dir / f"{_cache_name(sid)}.gpkg"
         digest = _sha256(raw) if raw.exists() else None
         key = {"sha256": digest, "layer": src.layer}
         frame = None
@@ -286,7 +299,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--force", action="store_true",
                         help="reprocessa todas as fontes, ignorando o cache")
     parser.add_argument("--tippecanoe", default=shutil.which("tippecanoe"),
-                        help="caminho do tippecanoe (padrao: o do PATH)")
+                        help="caminho do tippecanoe (padrao: o do PATH; vazio = sem tippecanoe)")
     parser.add_argument("--keep-intermediate", type=Path, default=None, metavar="DIR",
                         help="guarda em DIR os GeoJSON de entrada do tippecanoe "
                              "(escritos mesmo sem tippecanoe, para rodar a mao)")
@@ -298,7 +311,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     rep = build(args.raw, args.out, sources, allow_network=args.allow_network,
-                tippecanoe=args.tippecanoe, force=args.force,
+                tippecanoe=args.tippecanoe or None, force=args.force,
                 keep_intermediate=args.keep_intermediate)
     for source_id, status in rep.statuses.items():
         print(f"{source_id}: {status}")

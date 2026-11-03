@@ -406,3 +406,32 @@ def test_assembly_does_not_reread_the_final_gpkg(tmp_path, monkeypatch):
     assert rep.counts == {"geo_units": 1, "volcanoes": 0, "tectonic_zones": 0, "samples": 1}
     s = read_dataframe(out / "geoworld.gpkg", layer="samples")
     assert list(s["unit_id"]) == ["u1"]
+
+
+# --- ids com caracteres invalidos em nome de arquivo -------------------------
+
+def test_source_id_with_colon_gets_a_safe_cache_file(tmp_path):
+    """'georoc:<arquivo>' tem ':' (no Windows vira fluxo alternativo do NTFS)."""
+    raw, out = tmp_path / "raw", tmp_path / "out"
+    _write_raw(raw, "v.json", [{"name": "Etna", "lon": 15.0, "lat": 37.75}])
+    loader = Loader("volcanoes")
+    src = Src("georoc:a/b", "v.json", "volcanoes", loader)
+    rep = build(raw, out, [src])
+    assert rep.statuses == {"georoc:a/b": "processed"}
+    names = [p.name for p in (out / "_cache").iterdir()]
+    assert names and all(":" not in n and "/" not in n for n in names)
+    assert build(raw, out, [src]).statuses == {"georoc:a/b": "skipped"}
+    assert loader.calls == 1
+
+
+def test_cache_names_of_similar_ids_do_not_collide():
+    assert build_mod._cache_name("georoc:x") != build_mod._cache_name("georoc_x")
+
+
+def test_cli_empty_tippecanoe_means_none(monkeypatch):
+    seen = {}
+    monkeypatch.setattr(build_mod, "SOURCES", [object()])
+    monkeypatch.setattr(build_mod, "build", lambda *a, **kw: seen.update(kw) or
+                        build_mod.BuildReport({}, {}, [], []))
+    assert build_mod.main(["--raw", "r", "--out", "o", "--tippecanoe", ""]) == 0
+    assert seen["tippecanoe"] is None
