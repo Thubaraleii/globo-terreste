@@ -2,7 +2,8 @@
 // (necessario para PMTiles). Serve web/ por padrao.
 // Uso: `npm run serve` (porta 8766; `PORT` sobrescreve) ou importar createStaticServer.
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -51,14 +52,16 @@ export function createStaticServer(root = DEFAULT_ROOT) {
       res.end();
       return;
     }
-    let body;
     let file;
+    let size;
     try {
       const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
       file = normalize(join(base, path));
       if (file !== base && !file.startsWith(base + sep)) return notFound();
       if (path.endsWith('/')) file = join(file, 'index.html');
-      body = await readFile(file);
+      const info = await stat(file);
+      if (!info.isFile()) return notFound();
+      size = info.size;
     } catch {
       return notFound();
     }
@@ -67,22 +70,42 @@ export function createStaticServer(root = DEFAULT_ROOT) {
       'Cache-Control': 'no-store',
       'Accept-Ranges': 'bytes',
     };
-    const range = parseRange(req.headers.range, body.length);
-    let status = 200;
-    let out = body;
+    const range = parseRange(req.headers.range, size);
     if (range === 'unsatisfiable') {
-      res.writeHead(416, { ...headers, 'Content-Range': `bytes */${body.length}` });
+      res.writeHead(416, { ...headers, 'Content-Range': `bytes */${size}` });
       res.end();
       return;
     }
+    let status = 200;
+    let start = 0;
+    let end = size - 1;
     if (range) {
       status = 206;
-      out = body.subarray(range.start, range.end + 1);
-      headers['Content-Range'] = `bytes ${range.start}-${range.end}/${body.length}`;
+      ({ start, end } = range);
+      headers['Content-Range'] = `bytes ${start}-${end}/${size}`;
     }
-    headers['Content-Length'] = out.length;
-    res.writeHead(status, headers);
-    res.end(req.method === 'HEAD' ? undefined : out);
+    headers['Content-Length'] = size === 0 ? 0 : end - start + 1;
+    if (req.method === 'HEAD' || size === 0) {
+      res.writeHead(status, headers);
+      res.end();
+      return;
+    }
+    // Le so a faixa pedida, em streaming (nunca o arquivo inteiro na memoria).
+    const stream = createReadStream(file, { start, end });
+    stream.on('open', () => {
+      res.writeHead(status, headers);
+      stream.pipe(res);
+    });
+    stream.on('error', (err) => {
+      if (!res.headersSent) {
+        const missing = err?.code === 'ENOENT';
+        res.writeHead(missing ? 404 : 500, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end(missing ? 'nao encontrado' : 'erro de leitura');
+      } else {
+        res.destroy(err);
+      }
+    });
+    res.on('close', () => stream.destroy());
   });
 }
 

@@ -80,6 +80,35 @@ test('tentativa de saida da raiz da 404', async () => {
   assert.equal(res.status, 404);
 });
 
+test('faixa em arquivo de ~20 MB devolve os bytes certos (leitura em streaming)', async () => {
+  const size = 20 * 1024 * 1024 + 123;
+  const big = Buffer.alloc(size);
+  for (let i = 0; i + 4 <= size; i += 4096) big.writeUInt32LE(i, i);
+  writeFileSync(join(dir, 'big.bin'), big);
+  const start = 15 * 1024 * 1024 + 7;
+  const end = start + 65535;
+  const res = await get('/big.bin', { Range: `bytes=${start}-${end}` });
+  assert.equal(res.status, 206);
+  assert.equal(res.headers.get('content-range'), `bytes ${start}-${end}/${size}`);
+  assert.equal(res.headers.get('content-length'), '65536');
+  assert.ok((await buf(res)).equals(big.subarray(start, end + 1)));
+  const tail = await get('/big.bin', { Range: 'bytes=-10' });
+  assert.ok((await buf(tail)).equals(big.subarray(size - 10)));
+  const whole = await get('/big.bin');
+  assert.equal(whole.status, 200);
+  assert.equal(whole.headers.get('content-length'), String(size));
+  assert.ok((await buf(whole)).equals(big));
+  const head = await get('/big.bin', { Range: 'bytes=0-9' }, 'HEAD');
+  assert.equal(head.status, 206);
+  assert.equal(head.headers.get('content-length'), '10');
+  assert.equal((await buf(head)).length, 0);
+});
+
+test('diretorio sem index.html da 404', async () => {
+  const res = await get('/');
+  assert.equal(res.status, 404);
+});
+
 test('leitura estilo PMTiles: cabecalho e depois um trecho, por duas faixas', async () => {
   const header = await get('/data.bin', { Range: 'bytes=0-15' });
   assert.equal(header.status, 206);

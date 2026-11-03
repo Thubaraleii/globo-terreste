@@ -57,6 +57,56 @@ function bboxOf(geometry) {
   return box;
 }
 
+// A geometria cruza o antimeridiano? Sim se dois vertices seguidos saltam mais de
+// 180 graus de longitude, ou se ela toca ±180 (geometria ja cortada em ±180).
+function crossesAntimeridian(geometry) {
+  let crosses = false;
+  const visit = (c) => {
+    if (crosses || !Array.isArray(c)) return;
+    if (Array.isArray(c[0]) && typeof c[0][0] === 'number') {
+      for (let i = 0; i < c.length; i += 1) {
+        const lng = c[i]?.[0];
+        if (!Number.isFinite(lng)) continue;
+        if (Math.abs(lng) === 180) crosses = true;
+        const prev = c[i - 1]?.[0];
+        if (Number.isFinite(prev) && Math.abs(lng - prev) > 180) crosses = true;
+      }
+      return;
+    }
+    if (typeof c[0] === 'number') {
+      if (Math.abs(c[0]) === 180) crosses = true;
+      return;
+    }
+    c.forEach(visit);
+  };
+  if (geometry?.type === 'GeometryCollection') geometry.geometries?.forEach((g) => visit(g?.coordinates));
+  else visit(geometry?.coordinates);
+  return crosses;
+}
+
+// Longitude do centro: meio da caixa; se a geometria cruza ±180, o meio e calculado
+// com as longitudes negativas deslocadas para [180, 360) e volta para [-180, 180].
+function centreLng(geometry, bbox) {
+  if (!crossesAntimeridian(geometry)) return (bbox[0] + bbox[2]) / 2;
+  let lo = Infinity;
+  let hi = -Infinity;
+  const visit = (c) => {
+    if (!Array.isArray(c)) return;
+    if (typeof c[0] === 'number') {
+      if (!Number.isFinite(c[0]) || !Number.isFinite(c[1])) return;
+      const x = c[0] < 0 ? c[0] + 360 : c[0];
+      lo = Math.min(lo, x);
+      hi = Math.max(hi, x);
+      return;
+    }
+    c.forEach(visit);
+  };
+  if (geometry?.type === 'GeometryCollection') geometry.geometries?.forEach((g) => visit(g?.coordinates));
+  else visit(geometry?.coordinates);
+  const mid = (lo + hi) / 2;
+  return mid > 180 ? mid - 360 : mid;
+}
+
 function featuresOf(fc) {
   return Array.isArray(fc?.features) ? fc.features : [];
 }
@@ -73,7 +123,7 @@ export function buildSearchItems(volcanoes, zones) {
     out.push({
       name: props.name,
       kind,
-      lng: (bbox[0] + bbox[2]) / 2,
+      lng: centreLng(f?.geometry, bbox),
       lat: (bbox[1] + bbox[3]) / 2,
       bbox,
       layer,

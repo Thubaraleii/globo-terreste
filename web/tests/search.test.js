@@ -82,3 +82,36 @@ test('test_build_search_items_from_geojson', () => {
   assert.equal(items[2].props.rank, 1);
   assert.deepEqual(buildSearchItems(null, { features: 'x' }), []);
 });
+
+const line = (name, coords) => ({ type: 'Feature', properties: { name }, geometry: { type: 'LineString', coordinates: coords } });
+
+test('test_zone_centre_wraps_across_antimeridian', () => {
+  const zones = { type: 'FeatureCollection', features: [line('Tonga', [[178, -20], [179.5, -21], [-179.5, -22], [-178, -23]])] };
+  const [item] = buildSearchItems(null, zones);
+  assert.ok(Math.abs(Math.abs(item.lng) - 180) < 1, `centro ${item.lng} deveria ficar perto de ±180`);
+  assert.ok(item.lng >= -180 && item.lng <= 180);
+  assert.equal(item.lat, -21.5);
+  // trecho so a oeste do antimeridiano visto do leste: 175..-170 -> centro 182.5 -> -177.5
+  const [b] = buildSearchItems(null, { features: [line('B', [[175, 0], [-170, 1]])] });
+  assert.equal(b.lng, -177.5);
+});
+
+test('test_zone_centre_unchanged_for_normal_zone', () => {
+  const zones = { type: 'FeatureCollection', features: [line('Andes', [[-75, -40], [-70, -20], [-65, 0]])] };
+  const [item] = buildSearchItems(null, zones);
+  assert.equal(item.lng, -70);
+  assert.equal(item.lat, -20);
+  // linha larga que nao cruza ±180 (nenhum salto > 180 entre vertices, nao toca ±180)
+  const [w] = buildSearchItems(null, { features: [line('W', [[-100, 0], [0, 0], [100, 0]])] });
+  assert.equal(w.lng, 0);
+});
+
+test('test_zone_split_at_antimeridian_centre_near_180', () => {
+  const split = {
+    type: 'Feature',
+    properties: { name: 'Fiji' },
+    geometry: { type: 'MultiLineString', coordinates: [[[176, -15], [180, -16]], [[-180, -16], [-176, -17]]] },
+  };
+  const [item] = buildSearchItems(null, { features: [split] });
+  assert.ok(Math.abs(Math.abs(item.lng) - 180) < 1e-9, `centro ${item.lng}`);
+});
