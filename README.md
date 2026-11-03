@@ -7,7 +7,7 @@ Pipeline Python + globo web estático para dados geológicos. Este é o **primei
 
 O pipeline lê as fontes, normaliza, liga as amostras duplicadas entre fontes pelo campo `dup_group` (nunca apaga nenhuma) e exporta GeoJSON e PMTiles. O globo (MapLibre GL) lê esses arquivos de `web/data/`.
 
-> Estado atual: as fontes reais do primeiro recorte foram **baixadas em 2026-11-03** e o primeiro build real foi rodado (veja "Fontes de dados" e "Primeiro build real"). Os PMTiles **não** foram gerados (não há tippecanoe aqui). Os testes unitários usam apenas dados sintéticos; um teste de integração opcional usa os arquivos reais quando eles existem em `data/raw/`.
+> Estado atual: as fontes reais do primeiro recorte foram **baixadas em 2026-11-03**, o build real roda de ponta a ponta e os PMTiles saem pelo fallback do GDAL (veja "PMTiles sem tippecanoe"); o globo foi verificado no navegador com esses dados (round 2). Os testes unitários usam apenas dados sintéticos; um teste de integração opcional usa os arquivos reais quando eles existem em `data/raw/`.
 
 ## Estrutura
 
@@ -82,7 +82,7 @@ npm run serve
 
 Abre um servidor estático **somente em loopback** (`http://127.0.0.1:8766/`; `PORT=1234 npm run serve` muda a porta) servindo `web/`. Ele suporta requisições HTTP Range, que os PMTiles exigem. Qualquer outro servidor ou hospedagem **precisa** suportar Range (o GitHub Pages suporta); o `python -m http.server` **não** serve, porque responde sempre o arquivo inteiro.
 
-Atenção: o carregamento real de PMTiles **não foi verificado de ponta a ponta** (não há tippecanoe aqui, então não existe nenhum arquivo `.pmtiles`); só o comportamento de Range do servidor é testado. O estado (posição, camadas, filtros) fica no hash da URL.
+O carregamento de PMTiles gerados pelo GDAL foi verificado no navegador com os dados reais (veja "Segundo build"); os PMTiles do tippecanoe não foram testados aqui. O estado (posição, camadas, filtros) fica no hash da URL.
 
 ## Testes
 
@@ -94,6 +94,7 @@ npm run test:e2e                               # = playwright test (teste de fum
 
 - O e2e usa o **Microsoft Edge** já instalado (`channel: 'msedge'`); com `GEOWORLD_BROWSER=chrome` usa o Chrome. Ele **não baixa navegador**: não rode `npx playwright install`.
 - O e2e sobe esse mesmo servidor estático em `127.0.0.1:8767` (porta diferente da de `npm run serve`), copia dados **sintéticos** de `tests/e2e/data/` para `web/data/` e remove só o que copiou ao terminar. Se `web/data/` já tiver esses arquivos, ele aborta para não sobrescrevê-los.
+- Se houver dados **reais** em `web/data/` (por exemplo, depois de copiar a saída do pipeline para ver o globo), o e2e aborta de propósito para não apagá-los: mova esses arquivos para outra pasta antes de rodar o e2e.
 - `window.geoworldMap` (usado pelo e2e) só é exposto quando o host é `127.0.0.1` ou `localhost`.
 - `web/tests/static-server.test.js` testa o servidor estático (200, 206, 416, HEAD, bloqueio de `..`, leitura por duas faixas no estilo PMTiles e uma faixa num arquivo de ~20 MB; o servidor lê só a faixa pedida, em streaming).
 - O teste de estilo (`web/tests/style-validate.test.js`) valida as camadas de `buildLayers()` com `@maplibre/maplibre-gl-style-spec`, com controles negativos que provam que o validador rejeita estilos inválidos.
@@ -108,7 +109,7 @@ Todos os arquivos abaixo foram baixados em **2026-11-03** para `data/raw/` (fora
 | GVP (Smithsonian, Global Volcanism Program) | vulcões | `gvp/holocene_volcanoes.geojson` (2,4 MB; WFS `GVP-VOTW:Smithsonian_VOTW_Holocene_Volcanoes`, 1214 vulcões holocênicos) | Termos de uso próprios do GVP (volcano.si.edu); citação obrigatória |
 | PB2002 (Bird 2003, GeoJSON de fraxen/tectonicplates) | limites de placas | `pb2002/boundaries.json` (0,2 MB; 241 segmentos, 182 códigos `Name`) | Open Data Commons Attribution 1.0 (`pb2002/LICENSE.md`) |
 | Catálogo USGS ComCat (FDSN) | sismos M ≥ 6, 1900-01-01 a 2026-11-03 | `usgs/m6_1900_2026-11-03.csv` (2,5 MB; 14549 eventos) | USGS: domínio público (verificar termos) |
-| GLiM (Hartmann & Moosdorf 2012) | unidades litológicas | `glim/LiMW_GIS_2015.gdb.zip` (1,14 GB; camada `GLiM_export`, 1.235.259 polígonos, Eckert IV) | Licença **NÃO declarada** na fonte: uso local; não publicar sem confirmar. Plano B: WMS da CGMW |
+| GLiM (Hartmann & Moosdorf 2012) | unidades litológicas | `glim/LiMW_GIS_2015.gdb.zip` (1,14 GB; camada `GLiM_export`, 1.235.259 polígonos, Eckert IV) | Licença **NÃO declarada** na fonte: uso local; não publicar sem confirmar. A página oficial (`source_url`) foi **verificada** em 2026-11-03: lista o link do Dropbox, ~1,2 milhão de polígonos e escala ~1:3.750.000, sem texto de licença. `glim_extracted/` (1,2 GB) é uma extração **não usada** (o pipeline lê direto do zip) e pode ser apagada. Plano B: WMS da CGMW |
 | GEOROC 2.0, conjunto "Rocks" (DOI 10.25625/2JETOA, v15, 2026-09) | amostras de rocha | 35 CSVs `georoc/2026-09-2JETOA_*.csv` (176 MB no total; um por nome de rocha máfica/ultramáfica; codificação cp1252) | CC BY-SA 4.0; citar o conjunto de dados e as referências originais |
 | PetDB/EarthChem | amostras de rocha | **Não baixado** (portal interativo) | — |
 | CGMW 1:50M (WMS) | plano B para unidades geológicas | Não usado | Termos para uso em site público a confirmar |
@@ -118,7 +119,7 @@ Todos os arquivos abaixo foram baixados em **2026-11-03** para `data/raw/` (fora
 ### Regras de leitura das fontes reais (`pipeline/realsources.py`)
 
 - **GVP**: propriedades `Volcano_Name`, `Country`, `Primary_Volcano_Type`, `Last_Eruption_Year` (inteiro, negativo = antes da era comum; vira texto, ex. `-8300`; nulo continua nulo), `Latitude`, `Longitude`. As coordenadas vêm das propriedades `Latitude`/`Longitude`.
-- **Zonas tectônicas**: os segmentos do PB2002 são dissolvidos por `Name` (código do par de placas, ex. `PA-NA`), uma (Multi)LineString por código; o nome da zona é esse código. Do catálogo USGS entram só magnitudes de momento (família Mw). `rank_zones` com `top_n=30` e `buffer_km=100`.
+- **Zonas tectônicas**: os segmentos do PB2002 são dissolvidos por `Name` (código do par de placas, ex. `PA-NA`), uma (Multi)LineString por código; o nome da zona vem de `pb2002/plates.json`: `<placa A> – <placa B> (<código Name>)`, por exemplo `Nazca – South America (NZ\SA)`; placa sem nome conhecido (ou com nomes conflitantes) aparece com o código bruto, nunca com nome inventado. Do catálogo USGS entram só magnitudes de momento (família Mw). `rank_zones` com `top_n=30` e `buffer_km=250` (`pipeline.tectonics.DEFAULT_BUFFER_KM`): epicentros de megathrusts ficam para dentro do continente em relação à linha da fossa (Chile 1960 a 109 km, Tohoku 2011 a 137 km, Alasca 1964 a 196 km). Com 250 km, **94,1%** do momento Mw é atribuído a algum segmento (11768 sismos atribuídos, 1383 não atribuídos de 13151; com 100 km eram 42%).
 - **GLiM**: lido direto do zip, com filtro `xx IN ('vb','pb')` aplicado pelo GDAL (cerca de 93 mil polígonos). `unit_id` = `glim:fid:<FID do arquivo>` (o campo `IDENTITY_` não é único e tem nulos).
 - **GEOROC** (um registro por CSV, `source_id` = `georoc:<nome do arquivo>`):
   - lido em cp1252; linhas de rodapé (abreviações e lista de referências, sem `UNIQUE_ID`) são ignoradas;
@@ -129,12 +130,16 @@ Todos os arquivos abaixo foram baixados em **2026-11-03** para `data/raw/` (fora
 
 ### Mapeamento de rochas (proposto, revisar com geólogo)
 
-`data/curated/rock_mapping_v2.csv` (usado pelo GEOROC) mantém todas as linhas do v1 e acrescenta:
+`data/curated/rock_mapping_v2.csv` mantém todas as linhas do v1 e acrescenta:
 
 - **máficas**: alkali basalt, tholeiitic basalt, transitional basalt, subalkali basalt, calc-alkali basalt, picrobasalt, trachybasalt, basanite, ankaramite, gabbronorite, norite (além de basalt, gabbro, diabase, dolerite do v1);
 - **ultramáficas**: harzburgite, lherzolite, wehrlite, websterite, clinopyroxenite, orthopyroxenite (além de peridotite, dunite, pyroxenite, komatiite do v1).
 
-A comparação é por igualdade exata do nome normalizado. Nomes não listados (por exemplo picrite, oceanite, hawaiite, basaltic-andesite, e nomes com qualificador como `lherzolite, spinel, xenolith` ou `basalt, olivine`) **não** são classificados: saem da camada e são contados em `unmapped` nas notas de cada fonte.
+`data/curated/rock_mapping_v3.csv` (**usado pelo GEOROC**; v1 e v2 ficam intactos) = v2 + 505 nomes explícitos `<raiz já mapeada>, <qualificador mineral>` que ocorrem nos dados reais, com a **mesma classe da raiz**. Exemplos: `basalt, olivine`, `gabbro, hornblende`, `basalt, olivine-augite`, `basalt, augite-olivine`, `tholeiitic basalt, quartz`, `basanite, nepheline`, `pyroxenite, feldspar`, `lherzolite, spinel`. Qualificadores aceitos (só minerais/fases primárias): olivine, quartz, hornblende, augite, pyroxene, clinopyroxene, orthopyroxene, hypersthene, pigeonite, plagioclase e variedades (andesine, labradorite, bytownite, oligoclase, albite...), feldspar, nepheline, leucite, analcime, biotite, phlogopite, amphibole, garnet, spinel, magnetite, ilmenite, apatite, mica e variedades semelhantes, também combinados com hífen (`olivine-augite`) e `2-pyroxene`. **Ficam de fora** (listados, nada inferido): nomes com `xenolith`, compostos com ` / ` ou `[...]`, raízes que não estão no v2, qualificadores de alteração (iddingsite, chlorite, serpentine, talc, uralite, epidote...), `oxide`, `transitional`, `alkali`, `carbonate`, erros de digitação (`alivine`, `pgeonite`, `hyperstene`) e `cortlandite`. O v3 acrescenta ~11,7 mil amostras (10174 máficas, 1549 ultramáficas; contagem sobre as linhas `WR`, uma por amostra, com coordenada utilizável, antes de descartar `id` repetidos).
+
+**Decisão do USUÁRIO pendente: nomes com `xenolith`.** `lherzolite, spinel, xenolith` e semelhantes continuam **excluídos**: um xenólito é um fragmento do manto/crosta arrastado pelo magma, não uma rocha do local da amostra no mesmo sentido, e a classe (ultramáfica) seria a da raiz. Incluí-los traria 135 nomes e ~8,0 mil amostras: `lherzolite, spinel, xenolith` 1339; `peridotite, xenolith` 1335; `lherzolite, xenolith` 1111; `harzburgite, xenolith` 894; `peridotite, spinel, xenolith` 527; `harzburgite, spinel, xenolith` 423; `lherzolite, garnet, xenolith` 357; `dunite, xenolith` 306; `pyroxenite, xenolith` 240; `wehrlite, xenolith` 209; `websterite, xenolith` 205; `clinopyroxenite, xenolith` 160 (demais nomes somam o resto).
+
+A comparação é por igualdade exata do nome normalizado. Nomes não listados (por exemplo picrite, oceanite, hawaiite, basaltic-andesite, compostos e nomes com `xenolith`) **não** são classificados: saem da camada e são contados em `unmapped` nas notas de cada fonte.
 
 ## Primeiro build real
 
@@ -149,22 +154,38 @@ Rodado em 2026-11-03 com `python -m pipeline.build --raw data/raw --out data/out
 
 GEOROC (somando os 35 arquivos): 194569 linhas de dados, 175739 amostras após o filtro `WR` e uma linha por amostra; 49508 sem classe no mapeamento (`basaltic-andesite` sozinho são 15393; nomes com qualificador, como `lherzolite, spinel, xenolith`, são a maior parte do resto), 8205 caixas > 1°, 265 sem coordenadas (não geocodificadas).
 
-Problemas conhecidos encontrados neste build (a decidir):
+### Segundo build (round 2: buffer 250 km, mapeamento v3, ids únicos, PMTiles via GDAL)
 
-- **Sismos fora do buffer**: com `buffer_km=100`, só 8637 dos 13151 sismos Mw (42% do momento total) ficam a até 100 km de um limite do PB2002. Os maiores sismos de subducção têm epicentro a mais de 100 km da linha da fossa e **não** entram: Chile 1960 (Mw 9,5; 109 km), Alasca 1964 (9,2; 196 km), Tohoku 2011 (9,1; 137 km), Maule 2010 (8,8; 108 km). O ranking atual subestima justamente as maiores zonas de subducção.
-- **A mesma análise em mais de um arquivo do GEOROC**: uma amostra com mais de um nome de rocha aparece em mais de um CSV (por exemplo GABBRONORITE e GABBRO). Neste build, 1927 `id` aparecem em duas fontes (3897 linhas); a maioria fica ligada por `dup_group`, mas `id` não é único na camada `samples`.
-- `data/out/intermediate/geo_units.geojson` tem 360 MB e `samples.geojson` 43 MB (entradas do tippecanoe); `geoworld.gpkg` tem 184 MB.
+`python -m pipeline.build --raw data/raw --out data/out --force --tippecanoe ""` (sem tippecanoe; PMTiles pelo GDAL):
+
+| Camada | Linhas | Observações |
+|---|---|---|
+| `tectonic_zones` | 30 | 94,1% do momento Mw atribuído (buffer 250 km); nomes `Placa A – Placa B (código)`; top 1: `Nazca – South America (NZ\SA)` |
+| `geo_units` | 93220 | igual ao primeiro build |
+| `samples` | 126965 | 116963 máficas, 10002 ultramáficas; 32524 dentro de uma unidade básica do GLiM; 18154 com incerteza (caixas); 1944 grupos `dup_group`; `id` único |
+
+2519 amostras com `id` repetido entre fontes foram descartadas (vale a primeira fonte na ordem do registro; contagem por fonte em `dropped_duplicate_ids` e total em `_build` nas notas, impressa no resumo da CLI). Arquivos: `samples.pmtiles` 11,2 MB (zoom 1–8), `geo_units.pmtiles` 22,6 MB (zoom 0–6), `geoworld.gpkg` 186 MB. O GDAL avisa que algum tile de `geo_units` passou de 500 kB e foi codificado com resolução menor (baixo zoom).
+
+Verificado no navegador (Edge no painel do Claude, `npm run serve`): sem erros no console; as quatro camadas aparecem (visão global, Havaí, Islândia); clique numa amostra real mostra nome sem etiqueta de citação, classe, tipo de coordenada, unidade e fonte/licença/link; clique numa unidade mostra `sample_count` e o botão "Ver amostras desta litologia" filtra (`lith=basic_volcanic`); filtros de classe, nome da rocha e fonte funcionam; a busca acha vulcão (Kilauea) e zonas (Nazca); o estado da URL é restaurado. Dois ajustes saíram dessa verificação: intensidade do mapa de calor (sem agregação de densidade tudo saturava) e a grade do painel de detalhes (colunas esmagadas na unidade).
+
+Pendências vistas na verificação: os 35 arquivos do GEOROC aparecem com o mesmo rótulo (instituição) na lista de fontes, então os filtros por fonte ficam indistinguíveis; o painel de uma amostra mostra "Escala original do mapa: não informado" apesar do aviso de 1:3.750.000 (a escala vem do registro da fonte da unidade, e as amostras só carregam o `source_id` da amostra).
+
+Problemas encontrados no primeiro build e situação:
+
+- **Sismos fora do buffer** (corrigido): com `buffer_km=100` só 42% do momento era atribuído; com 250 km são 94,1%.
+- **A mesma análise em mais de um arquivo do GEOROC** (corrigido): `id` repetidos entre fontes são descartados na montagem (primeira fonte vence).
+- `data/out/intermediate/geo_units.geojson` (360 MB) e `samples.geojson` (43 MB) são só para rodar o tippecanoe à mão (`--keep-intermediate`); `geoworld.gpkg` tem 184 MB.
 
 ## Ferramentas (verificadas)
 
 - Python 3.11.9: presente (use `.venv`, dependências em `requirements.txt`)
 - Node v24: presente
-- tippecanoe: **ausente** (no Windows costuma exigir WSL ou Docker; não instalado), portanto os PMTiles não são gerados aqui
+- tippecanoe: **ausente** (no Windows costuma exigir WSL ou Docker; não instalado); os PMTiles saem pelo fallback do GDAL do pyogrio (3.12.4)
 - Microsoft Edge: presente, usado pelo teste e2e (nenhum navegador é baixado)
 
 ## Limitações conhecidas
 
-- **Sem tippecanoe**: `geo_units.pmtiles` e `samples.pmtiles` não foram gerados. Instale o tippecanoe via WSL ou Docker para produzi-los (veja "tippecanoe no Windows (WSL)").
+- **PMTiles via GDAL**: sem agregação de densidade em zoom baixo (o mapa de calor usa todos os pontos) e com simplificação/descarte de polígonos pequenos em baixo zoom; tippecanoe é recomendado (veja "PMTiles sem tippecanoe" e "tippecanoe no Windows (WSL)").
 - **Busca por unidades geológicas**: a busca só encontra vulcões, hotspots, zonas tectônicas e coordenadas; unidades geológicas não são pesquisáveis.
 - **Mapas de fundo**: só o "Fundo liso" está habilitado, até que se escolham provedores de tiles (cujos termos precisam ser confirmados). Os demais ficam ocultos.
 - **GitHub Pages**: limite de 100 MB por arquivo; a exportação avisa quando um arquivo passa de 95 MB.
@@ -181,4 +202,4 @@ Problemas conhecidos encontrados neste build (a decidir):
 
 Verificado: primeiro build real (veja "Primeiro build real"); testes Python (pytest) com fixtures; testes Node dos módulos puros; validação do estilo do mapa; teste de fumaça no Edge com **dados sintéticos** (carregamento, ligar/desligar camada, clique e painel de detalhes, Escape e foco, restauração de estado pela URL, aviso de PMTiles ausentes, nome com HTML exibido como texto).
 
-Não verificado: geração de PMTiles e o globo com os dados reais, desempenho com volumes reais de dados, Chrome/Firefox/Safari e dispositivos móveis.
+Não verificado: PMTiles gerados pelo tippecanoe, desempenho com volumes reais de dados, Chrome/Firefox/Safari e dispositivos móveis.
