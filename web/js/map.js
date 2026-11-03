@@ -2,6 +2,7 @@
 // Usa o global `maplibregl` (web/vendor/maplibre-gl.js).
 import { encodeState } from './urlstate.js';
 import { baseStyle } from './basemaps.js';
+import { ATTRIBUTION_FALLBACK } from './inspector.js';
 
 const URL_DEBOUNCE_MS = 250;
 const PLACEHOLDER = 'Passe o cursor sobre o mapa';
@@ -53,6 +54,18 @@ export function setAppState(map, state) {
   scheduleUrlWrite(map);
 }
 
+// (Re)cria o controle de atribuicao com o texto das fontes dos dados. `html` ja vem
+// escapado (buildAttribution em inspector.js): o MapLibre insere como HTML.
+const attributionControls = new WeakMap();
+
+export function setDataAttribution(map, html) {
+  const old = attributionControls.get(map);
+  if (old) map.removeControl(old);
+  const ctrl = new maplibregl.AttributionControl({ compact: false, customAttribution: html });
+  attributionControls.set(map, ctrl);
+  map.addControl(ctrl, 'bottom-right');
+}
+
 export function createMap(container, state) {
   const map = new maplibregl.Map({
     container,
@@ -69,7 +82,7 @@ export function createMap(container, state) {
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
   map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
   map.addControl(new CoordsControl(), 'bottom-left');
-  map.addControl(new maplibregl.AttributionControl({ compact: false }), 'bottom-right');
+  setDataAttribution(map, ATTRIBUTION_FALLBACK);
 
   map.on('style.load', () => map.setProjection({ type: 'globe' }));
   map.on('moveend', () => scheduleUrlWrite(map));

@@ -65,6 +65,34 @@ export function indexSources(list) {
   return out;
 }
 
+const nonEmpty = (v) => (typeof v === 'string' && v.trim() !== '' ? v.trim() : null);
+
+// Texto de atribuicao para o controle do mapa (HTML seguro: o MapLibre o insere como
+// HTML). Por fonte: `attribution`, senao `institution`, senao `source_id`; sem
+// repeticoes. Sem fontes validas: ATTRIBUTION_FALLBACK.
+export const ATTRIBUTION_FALLBACK = 'Dados: ver painel de detalhes';
+
+export function buildAttribution(list) {
+  const seen = new Set();
+  for (const s of indexSources(list).values()) {
+    const text = nonEmpty(s.attribution) ?? nonEmpty(s.institution) ?? nonEmpty(s.source_id);
+    if (text) seen.add(text);
+  }
+  if (seen.size === 0) return ATTRIBUTION_FALLBACK;
+  return `Dados: ${[...seen].map(esc).join(' · ')}`;
+}
+
+// Opcoes do filtro por fonte: { value: source_id, label: institution ou source_id }
+// (texto puro; quem exibe usa textContent). Um item por source_id.
+export function sourceOptions(list) {
+  const out = new Map(); // a primeira ocorrencia de cada source_id vale
+  for (const s of Array.isArray(list) ? list : []) {
+    if (!s || typeof s !== 'object' || typeof s.source_id !== 'string' || out.has(s.source_id)) continue;
+    out.set(s.source_id, { value: s.source_id, label: nonEmpty(s.institution) ?? s.source_id });
+  }
+  return [...out.values()];
+}
+
 function sourceSection(sourceId, source) {
   const s = source ?? {};
   return section('Fonte', list([
@@ -138,7 +166,7 @@ export function renderUnit(props, sampleCount, opts = {}) {
     list([
       row('Classe litológica', showLabel(LITH_LABELS, p.lith_class)),
       row('Litologia original', show(p.lith_original)),
-      row('Número de amostras', count),
+      row('Registros de amostras (com duplicatas entre fontes)', count),
       row('Identificador', show(p.unit_id)),
     ]),
     button,

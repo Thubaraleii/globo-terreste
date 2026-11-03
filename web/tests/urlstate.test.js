@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { encodeState, decodeState, DEFAULT_STATE } from '../js/urlstate.js';
+import { encodeState, decodeState, DEFAULT_STATE, KNOWN } from '../js/urlstate.js';
 
 test('test_roundtrip_default_state', () => {
   assert.deepEqual(decodeState(encodeState(DEFAULT_STATE)), DEFAULT_STATE);
@@ -15,14 +15,36 @@ test('test_roundtrip_state_with_filters_and_odd_characters', () => {
     zoom: 7.25,
     layers: ['volcanoes', 'samples'],
     filters: {
-      classes: ['basalto', 'riólito & co'],
+      classes: ['mafic', 'ultramafic'],
       rock: 'Olivine "tholeiite" #1 = x&y',
-      sources: ['GEOROC', 'PetDB'],
-      coordSource: 'publicada',
-      lithClass: 'vb',
+      sources: ['GEOROC', 'PetDB & co #1'],
+      coordSource: 'geocoded',
+      lithClass: 'basic_volcanic & "x"',
     },
   };
   assert.deepEqual(decodeState('#' + encodeState(state)), state);
+});
+
+test('test_known_sets_are_exported', () => {
+  assert.deepEqual([...KNOWN.classes].sort(), ['mafic', 'ultramafic']);
+  assert.deepEqual([...KNOWN.coordSource].sort(), ['geocoded', 'reported']);
+});
+
+test('test_decode_drops_unknown_filter_values', () => {
+  const s = decodeState('#class=foo&class=mafic&class=__proto__&coord=bogus&lith=');
+  assert.deepEqual(s.filters.classes, ['mafic']);
+  assert.equal(s.filters.coordSource, null);
+  assert.equal(s.filters.lithClass, null);
+  assert.deepEqual(decodeState('#class=foo').filters.classes, []);
+  assert.equal(decodeState('#coord=reported').filters.coordSource, 'reported');
+  // classe repetida vira uma so
+  assert.deepEqual(decodeState('#class=mafic&class=mafic').filters.classes, ['mafic']);
+});
+
+test('test_decode_lith_must_be_short_string', () => {
+  assert.equal(decodeState(`#lith=${'a'.repeat(100)}`).filters.lithClass, 'a'.repeat(100));
+  assert.equal(decodeState(`#lith=${'a'.repeat(101)}`).filters.lithClass, null);
+  assert.equal(decodeState('#lith=qualquer%20coisa').filters.lithClass, 'qualquer coisa');
 });
 
 test('test_decode_garbage_returns_default_state', () => {

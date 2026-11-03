@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   esc, NAO_INFORMADO, renderSample, renderUnit, renderVolcano, renderZone,
-  renderSourceLink, indexSources,
+  renderSourceLink, indexSources, buildAttribution, ATTRIBUTION_FALLBACK, sourceOptions,
 } from '../js/inspector.js';
 
 const HOSTILE = '<img src=x onerror=1>';
@@ -98,6 +98,45 @@ test('test_render_unit_zero_samples_shows_0', () => {
     assert.ok(html.includes(NAO_INFORMADO));
   }
   assert.match(renderUnit(props, 17), /<dd>17<\/dd>/);
+});
+
+test('test_render_unit_sample_count_label_says_records_with_duplicates', () => {
+  const html = renderUnit({ unit_id: 'u1', lith_class: 'basic_volcanic' }, 4);
+  assert.ok(html.includes('<dt>Registros de amostras (com duplicatas entre fontes)</dt><dd>4</dd>'), html);
+  assert.ok(!html.includes('Número de amostras'));
+});
+
+test('test_build_attribution_escapes_and_dedupes', () => {
+  const text = buildAttribution([
+    { source_id: 'a', institution: 'Inst A', attribution: 'GVP <b>2026</b> & co' },
+    { source_id: 'b', institution: 'Inst B', attribution: null },
+    { source_id: 'c', institution: 'Inst B', attribution: '  ' },
+    { source_id: 'd', institution: 'Outra', attribution: 'GVP <b>2026</b> & co' },
+    { source_id: 'e', institution: null, attribution: null },
+    null,
+    'lixo',
+  ]);
+  assert.equal(text, 'Dados: GVP &lt;b&gt;2026&lt;/b&gt; &amp; co · Inst B · e');
+});
+
+test('test_build_attribution_empty_or_missing_gives_fallback', () => {
+  for (const bad of [null, undefined, [], 'x', [{}], [{ source_id: 3 }]]) {
+    assert.equal(buildAttribution(bad), ATTRIBUTION_FALLBACK, JSON.stringify(bad));
+  }
+  assert.equal(ATTRIBUTION_FALLBACK, 'Dados: ver painel de detalhes');
+});
+
+test('test_source_options_label_is_institution_or_id', () => {
+  assert.deepEqual(sourceOptions([
+    { source_id: 'georoc', institution: 'GEOROC <i>' },
+    { source_id: 'petdb', institution: '  ' },
+    { source_id: 'georoc', institution: 'repetida' },
+    { institution: 'sem id' },
+  ]), [
+    { value: 'georoc', label: 'GEOROC <i>' },
+    { value: 'petdb', label: 'petdb' },
+  ]);
+  assert.deepEqual(sourceOptions(null), []);
 });
 
 test('test_render_unit_without_lith_class_has_no_filter_button', () => {

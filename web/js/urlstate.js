@@ -18,7 +18,15 @@ export const DEFAULT_STATE = Object.freeze({
   }),
 });
 
-const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+// Valores aceitos na URL para os filtros com conjunto fechado; outros sao descartados.
+export const KNOWN = Object.freeze({
+  classes: new Set(['mafic', 'ultramafic']),
+  coordSource: new Set(['reported', 'geocoded']),
+});
+// lith: qualquer texto nao vazio de ate LITH_MAX caracteres.
+const LITH_MAX = 100;
+
+const clamp =(v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const round = (v, n) => Number(v.toFixed(n));
 
 function num(raw, fallback, lo, hi) {
@@ -72,10 +80,13 @@ export function decodeState(hash) {
     const ids = p.get('layers').split(',').filter((id) => LAYER_IDS.includes(id));
     out.layers = [...new Set(ids)];
   }
-  out.filters.classes = p.getAll('class');
+  out.filters.classes = [...new Set(p.getAll('class').filter((c) => KNOWN.classes.has(c)))];
   out.filters.rock = p.get('rock');
+  // fontes: validadas contra sources.json quando ele carrega (painel de camadas)
   out.filters.sources = p.getAll('source');
-  out.filters.coordSource = p.get('coord');
-  out.filters.lithClass = p.get('lith');
+  const coord = p.get('coord');
+  out.filters.coordSource = KNOWN.coordSource.has(coord) ? coord : null;
+  const lith = p.get('lith');
+  out.filters.lithClass = typeof lith === 'string' && lith !== '' && lith.length <= LITH_MAX ? lith : null;
   return out;
 }

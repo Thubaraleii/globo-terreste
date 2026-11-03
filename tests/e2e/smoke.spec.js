@@ -105,6 +105,28 @@ test('uma URL com estado salvo restaura camadas, filtros e posicao', async ({ pa
   expect(JSON.stringify(view.filter)).toContain('basalto');
 });
 
+test('filtros da URL sao validados; filtro de fonte vem de sources.json; Limpar filtros zera tudo', async ({ page }) => {
+  await open(page, '#lng=0&lat=0&zoom=2&layers=volcanoes&class=foo&coord=bogus&source=sintetico-vulcoes&source=bogus&rock=x&lith=basic_volcanic');
+  const filterOf = () => page.evaluate(() => window.geoworldMap.getFilter('samples:points') ?? null);
+  const src = page.getByLabel('Instituição SINTÉTICA de teste', { exact: true });
+  await expect(src).toBeChecked();
+  await expect(page.getByLabel('Máfica', { exact: true })).not.toBeChecked();
+  await expect(page.getByLabel('Origem da coordenada')).toHaveValue('');
+  await expect.poll(async () => JSON.stringify(await filterOf())).not.toContain('bogus');
+  const f = JSON.stringify(await filterOf());
+  expect(f).toContain('sintetico-vulcoes');
+  expect(f).not.toContain('foo');
+  expect(f).not.toContain('coord_source');
+  // atribuicao no mapa vem de sources.json
+  await expect(page.locator('.maplibregl-ctrl-attrib')).toContainText('Atribuição sintética');
+  await page.getByRole('button', { name: 'Limpar filtros' }).click();
+  await expect(src).not.toBeChecked();
+  await expect(page.getByLabel('Nome da rocha contém')).toHaveValue('');
+  await expect(page.locator('.filter-lith')).toBeHidden();
+  await expect.poll(filterOf).toBeNull();
+  await expect.poll(() => page.evaluate(() => window.location.hash)).not.toContain('source=');
+});
+
 test('PMTiles ausentes mostram o aviso no painel e o resto continua funcionando', async ({ page }) => {
   const { pageErrors } = watch(page);
   await open(page, '#lng=10&lat=10&zoom=3&layers=geo_units,samples,volcanoes,tectonic_zones');

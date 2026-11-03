@@ -1,8 +1,10 @@
 import { decodeState } from './urlstate.js';
-import { createMap, setAppState } from './map.js';
+import { createMap, setAppState, setDataAttribution } from './map.js';
 import { mountLayerPanel } from './layers.js';
 import { addDataLayers, applySampleFilter } from './datalayers.js';
-import { renderSample, renderUnit, renderVolcano, renderZone, indexSources } from './inspector.js';
+import {
+  renderSample, renderUnit, renderVolcano, renderZone, indexSources, buildAttribution,
+} from './inspector.js';
 import { parseCoords, searchIndex, buildSearchItems } from './search.js';
 
 // Pasta dos dados (relativa a pagina); sem sobrescrita por URL.
@@ -81,6 +83,8 @@ details.querySelector('.details-close').addEventListener('click', closeDetails);
 fetchJson('sources.json')
   .then((list) => {
     sources = indexSources(list);
+    layerPanel.setSources(list);
+    setDataAttribution(map, buildAttribution(list));
     if (current) {
       // refaz o painel aberto com os dados da fonte, mantendo o foco no titulo
       const hadFocus = detailsBody.contains(document.activeElement);
@@ -88,7 +92,11 @@ fetchJson('sources.json')
       if (hadFocus) detailsBody.querySelector('.details-heading')?.focus();
     }
   })
-  .catch((err) => console.warn('Fontes indisponíveis (sources.json):', err));
+  .catch((err) => {
+    console.warn('Fontes indisponíveis (sources.json):', err);
+    // sem sources.json: filtro por fonte oculto e descartado; atribuicao generica
+    layerPanel.setSources(null);
+  });
 
 function openUnit(props) {
   openDetails(

@@ -180,6 +180,10 @@ html, body {
 }
 .filter-lith { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; }
 .filter-lith[hidden] { display: none; }
+.filter-sources { margin: 6px 0 0; padding: 0 4px; border: 0; }
+.filter-sources legend { padding: 0; font-size: 12px; color: var(--text-muted); }
+.filter-sources[hidden] { display: none; }
+.filter-clear { margin-top: 8px; }
 
 /* Busca */
 .search-box {

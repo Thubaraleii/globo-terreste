@@ -6,9 +6,11 @@
 // `[data-legend-for="X"]`.
 import { LAYER_DEFS, LAYER_IDS, moveItem, raiseAbove } from './layer-defs.js';
 import { BASEMAPS, availableBasemaps, applyBasemap } from './basemaps.js';
-import { LITH_COLORS } from './layerstyles.js';
+import { LITH_COLORS, ROCK_CLASS_COLORS } from './layerstyles.js';
+import { sourceOptions } from './inspector.js';
 
 const LITH_LABELS = new Map(LITH_COLORS.map(([value, , label]) => [value, label]));
+const ROCK_CLASSES = new Set(ROCK_CLASS_COLORS.map(([value]) => value));
 
 export { LAYER_DEFS };
 
@@ -129,8 +131,71 @@ export function mountLayerPanel(map, state, onChange) {
     emit();
   }
 
-  // Filtros das amostras: classe, nome da rocha e origem da coordenada.
-  // (Filtro por fonte existe no estado/URL, mas ainda sem controle.)
+  // Filtro por fonte: as caixas so existem depois que sources.json carrega
+  // (setSources); sem sources.json o grupo fica oculto.
+  const sourceBox = document.createElement('fieldset');
+  sourceBox.className = 'filter-sources';
+  sourceBox.hidden = true;
+  const sourceLegend = document.createElement('legend');
+  sourceLegend.textContent = 'Fonte';
+  sourceBox.append(sourceLegend);
+  const sourceChecks = new Map(); // source_id -> checkbox
+  let sourcesKnown = false;
+
+  // Recebe a lista de sources.json (ou null se falhou). Monta as caixas uma unica vez
+  // e descarta do filtro as fontes que nao existem nela.
+  function setSources(list) {
+    if (sourcesKnown) return;
+    sourcesKnown = true;
+    const options = sourceOptions(list);
+    for (const { value, label: text } of options) {
+      const label = document.createElement('label');
+      label.className = 'filter-check';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.addEventListener('change', () => {
+        filters.sources = cb.checked
+          ? [...new Set([...filters.sources, value])]
+          : filters.sources.filter((s) => s !== value);
+        emit();
+      });
+      label.append(cb, document.createTextNode(` ${text}`));
+      sourceChecks.set(value, cb);
+      sourceBox.append(label);
+    }
+    sourceBox.hidden = options.length === 0;
+    const valid = filters.sources.filter((s) => sourceChecks.has(s));
+    const changed = valid.length !== filters.sources.length;
+    filters.sources = [...new Set(valid)];
+    renderFilterWidgets();
+    if (changed) emit();
+  }
+
+  const classChecks = new Map(); // classe -> checkbox
+  let rockInput;
+  let coordSelect;
+
+  // Sincroniza os controles com `filters`.
+  function renderFilterWidgets() {
+    for (const [value, cb] of classChecks) cb.checked = filters.classes.includes(value);
+    for (const [value, cb] of sourceChecks) cb.checked = filters.sources.includes(value);
+    if (rockInput) rockInput.value = filters.rock ?? '';
+    if (coordSelect) coordSelect.value = filters.coordSource ?? '';
+    renderLith();
+  }
+
+  // Limpa todos os filtros das amostras (classe, nome, fonte, coordenada, litologia).
+  function clearFilters() {
+    filters.classes = [];
+    filters.rock = null;
+    filters.sources = [];
+    filters.coordSource = null;
+    filters.lithClass = null;
+    renderFilterWidgets();
+    emit();
+  }
+
+  // Filtros das amostras: classe, nome da rocha, fonte e origem da coordenada.
   function buildSampleFilters() {
     const box = document.createElement('fieldset');
     box.className = 'layer-filters';
@@ -138,6 +203,7 @@ export function mountLayerPanel(map, state, onChange) {
     legend.textContent = 'Filtros das amostras';
     box.append(legend);
 
+    filters.classes = filters.classes.filter((c) => ROCK_CLASSES.has(c));
     for (const [value, text] of [['mafic', 'Máfica'], ['ultramafic', 'Ultramáfica']]) {
       const label = document.createElement('label');
       label.className = 'filter-check';
@@ -151,6 +217,7 @@ export function mountLayerPanel(map, state, onChange) {
         emit();
       });
       label.append(cb, document.createTextNode(` ${text}`));
+      classChecks.set(value, cb);
       box.append(label);
     }
 
@@ -166,7 +233,8 @@ export function mountLayerPanel(map, state, onChange) {
       emit();
     });
     rockLabel.append(rock);
-    box.append(rockLabel);
+    rockInput = rock;
+    box.append(rockLabel, sourceBox);
 
     const coordLabel = document.createElement('label');
     coordLabel.className = 'filter-field';
@@ -176,13 +244,25 @@ export function mountLayerPanel(map, state, onChange) {
       coord.append(new Option(text, value));
     }
     coord.value = filters.coordSource ?? '';
-    if (coord.value !== (filters.coordSource ?? '')) coord.value = '';
+    // valor sem opcao: o filtro tambem e descartado (controle e filtro sempre iguais)
+    if (coord.value !== (filters.coordSource ?? '')) {
+      coord.value = '';
+      filters.coordSource = null;
+    }
     coord.addEventListener('change', () => {
       filters.coordSource = coord.value === '' ? null : coord.value;
       emit();
     });
     coordLabel.append(coord);
-    box.append(coordLabel, lithRow);
+    coordSelect = coord;
+
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'text-btn filter-clear';
+    clear.textContent = 'Limpar filtros';
+    clear.addEventListener('click', clearFilters);
+
+    box.append(coordLabel, lithRow, clear);
     renderLith();
     return box;
   }
@@ -291,5 +371,5 @@ export function mountLayerPanel(map, state, onChange) {
     applyToMap();
   });
   if (map.getStyle()) applyToMap();
-  return { setLithClass };
+  return { setLithClass, setSources };
 }
