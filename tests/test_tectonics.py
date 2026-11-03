@@ -118,3 +118,23 @@ def test_rank_zones_requires_crs():
     b = gpd.GeoDataFrame({"name": ["A"]}, geometry=[LineString([(0, 0), (0, 1)])])
     with pytest.raises(ValueError):
         rank_zones(b, _quakes([(0.0, 0.0, 6.0, "2000")]), "src")
+
+
+def test_assignment_stats_in_attrs():
+    b = _boundaries([("A", LineString([(0, -1), (0, 1)]))])
+    q = _quakes([(0.0, 0.5, 6.0, "2000"), (0.0, 1.5, 7.0, "2001"), (0.0, 40.0, 7.0, "2002")])
+    out = rank_zones(b, q, "src", buffer_km=100)
+    assert out.attrs["quakes_assigned"] == 1
+    assert out.attrs["quakes_unassigned"] == 2
+    expected = 100 * seismic_moment(6.0) / (seismic_moment(6.0) + 2 * seismic_moment(7.0))
+    assert out.attrs["moment_assigned_pct"] == pytest.approx(expected)
+    assert out.attrs["buffer_km"] == 100
+
+
+def test_default_buffer_is_250_km_for_megathrusts():
+    from pipeline.tectonics import DEFAULT_BUFFER_KM
+    assert DEFAULT_BUFFER_KM == 250
+    b = _boundaries([("A", LineString([(0, -1), (0, 1)]))])
+    q = _quakes([(0.0, 2.0, 8.0, "2000")])  # ~222 km: fora de 100 km, dentro de 250 km
+    assert len(rank_zones(b, q, "src")) == 1
+    assert len(rank_zones(b, q, "src", buffer_km=100)) == 0

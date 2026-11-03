@@ -119,6 +119,9 @@ def test_load_tectonics_ranks_dissolved_pairs_with_mw_only(tmp_path):
     assert out.attrs["quakes_excluded_magtype"] == {"ms": 1, "mb": 1}
     assert out.attrs["boundary_segments"] == 3
     assert out.attrs["boundary_pairs"] == 2
+    assert out.attrs["buffer_km"] == rs.ZONE_BUFFER_KM == 250
+    assert out.attrs["quakes_assigned"] + out.attrs["quakes_unassigned"] == 3
+    assert 0 < out.attrs["moment_assigned_pct"] <= 100
 
 
 # --- GLiM -------------------------------------------------------------------

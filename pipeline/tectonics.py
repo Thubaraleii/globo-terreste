@@ -15,6 +15,10 @@ from pipeline.common.geom import to_wgs84
 from pipeline.common.model import CRS, SCHEMAS
 
 EARTH_RADIUS_KM = 6371.0088
+# Epicentros de megathrusts ficam para dentro do continente em relacao a linha da
+# fossa do PB2002: Chile 1960 a 109 km, Tohoku 2011 a 137 km, Alasca 1964 a 196 km.
+# Com 100 km so ~42% do momento Mw era atribuido; 250 km cobre esses casos.
+DEFAULT_BUFFER_KM = 250
 _CHUNK = 500_000  # pares por bloco sismos x arestas
 
 
@@ -103,7 +107,7 @@ def rank_zones(
     boundaries: gpd.GeoDataFrame,
     quakes: pd.DataFrame,
     source_id: str,
-    buffer_km: float = 100,
+    buffer_km: float = DEFAULT_BUFFER_KM,
     top_n: int = 30,
 ) -> gpd.GeoDataFrame:
     """Soma o momento sismico dos sismos atribuidos a cada segmento (o mais
@@ -128,7 +132,8 @@ def rank_zones(
         best[closer], owner[closer] = d[closer], i
 
     hit = best <= max_angle
-    moment = pd.Series(seismic_moment(q["mw"].to_numpy()[hit])).groupby(owner[hit]).sum()
+    all_moment = seismic_moment(q["mw"].to_numpy())
+    moment = pd.Series(all_moment[hit]).groupby(owner[hit]).sum()
 
     out = segs.loc[moment.index, ["name", "geometry"]].copy()
     out["moment_total"] = moment.to_numpy(dtype="float64")
@@ -138,4 +143,13 @@ def rank_zones(
     out["period_start"] = q["time"].min() if len(q) else None
     out["period_end"] = q["time"].max() if len(q) else None
     out["source_id"] = source_id
-    return gpd.GeoDataFrame(out[SCHEMAS["tectonic_zones"]], geometry="geometry", crs=CRS)
+    result = gpd.GeoDataFrame(out[SCHEMAS["tectonic_zones"]], geometry="geometry", crs=CRS)
+    # atribuicao sobre TODOS os segmentos (nao so o top_n)
+    total = float(all_moment.sum())
+    result.attrs.update({
+        "buffer_km": buffer_km,
+        "quakes_assigned": int(hit.sum()),
+        "quakes_unassigned": int((~hit).sum()),
+        "moment_assigned_pct": float(100 * all_moment[hit].sum() / total) if total > 0 else 0.0,
+    })
+    return result

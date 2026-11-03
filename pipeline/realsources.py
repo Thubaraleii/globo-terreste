@@ -40,7 +40,7 @@ from pipeline.glim import normalize_glim
 from pipeline.gvp import normalize_gvp
 from pipeline.rockmap import load_mapping, normalize_rock_name
 from pipeline.samples import EMPTY_NAME, normalize_samples
-from pipeline.tectonics import rank_zones
+from pipeline.tectonics import DEFAULT_BUFFER_KM, rank_zones
 
 ACQUISITION_DATE = "2026-11-03"
 ROOT = Path(__file__).resolve().parent.parent
@@ -72,7 +72,9 @@ PB2002_REPO = "https://github.com/fraxen/tectonicplates"
 # magType da familia de magnitude de momento (comparacao sem caixa).
 MW_FAMILY = frozenset({"mw", "mww", "mwc", "mwb", "mwr"})
 TOP_ZONES = 30
-ZONE_BUFFER_KM = 100
+# epicentros de megathrusts ficam a 100-200 km da linha da fossa (Chile 1960: 109 km,
+# Tohoku 2011: 137 km, Alasca 1964: 196 km do PB2002); ver pipeline.tectonics
+ZONE_BUFFER_KM = DEFAULT_BUFFER_KM
 MAX_BOX_DEG = 1.0
 UNMAPPED_TOP = 20
 EARTH_RADIUS_M = 6371008.8
