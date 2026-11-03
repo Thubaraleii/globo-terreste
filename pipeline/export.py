@@ -71,7 +71,7 @@ def _with_unit_lith_class(samples, units):
     exportar: alimenta o filtro "amostras desta litologia" da web."""
     lookup = (
         units.dropna(subset=["unit_id"])
-        .drop_duplicates(subset="unit_id")
+        .drop_duplicates(subset="unit_id")  # unit_id repetido: vale a 1a linha (deliberado)
         .set_index("unit_id")["lith_class"]
     )
     out = samples.copy()
@@ -119,7 +119,11 @@ def export_web(gpkg: Path, out_dir: Path, tippecanoe: str | None,
                     result.warnings.append(f"camada {layer} vazia: {layer}.pmtiles nao gerado")
                     continue
                 if layer == "samples":
-                    gdf = _with_unit_lith_class(gdf, read_dataframe(gpkg, layer="geo_units"))
+                    # so atributos: nao decodificar milhoes de poligonos do GLiM
+                    units = read_dataframe(gpkg, layer="geo_units",
+                                           columns=["unit_id", "lith_class"],
+                                           read_geometry=False)
+                    gdf = _with_unit_lith_class(gdf, units)
                 source = Path(tmp) / f"{layer}.geojson"
                 _write_geojson(gdf, source)
                 run(

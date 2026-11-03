@@ -182,6 +182,20 @@ def test_samples_tiles_carry_unit_lith_class(tmp_path):
     assert "unit_lith_class" not in read_dataframe(g, layer="samples").columns
 
 
+def test_unit_lith_class_all_null_when_geo_units_empty(tmp_path):
+    seen = {}
+
+    def run(cmd, **kwargs):
+        seen[cmd[cmd.index("-l") + 1]] = _read(Path(cmd[-1]))
+        Path(cmd[cmd.index("-o") + 1]).write_bytes(b"")
+        return subprocess.CompletedProcess(cmd, 0)
+
+    export_web(_gpkg(tmp_path, with_units=False), tmp_path / "web",
+               tippecanoe="tippecanoe", run=run)
+    props = [f["properties"] for f in seen["samples"]["features"]]
+    assert props and all(p["unit_lith_class"] is None for p in props)
+
+
 def test_empty_pmtiles_layer_is_skipped_with_warning(tmp_path):
     run = FakeRunner()
     res = export_web(_gpkg(tmp_path, with_samples=False), tmp_path / "web",
