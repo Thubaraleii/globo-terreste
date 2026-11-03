@@ -1,6 +1,7 @@
 import json
 
 import pandas as pd
+import pytest
 
 from pipeline.common.model import CRS, SCHEMAS
 from pipeline.geocode import geocode_pending
@@ -30,7 +31,7 @@ class Recorder:
     def __call__(self, query):
         self.calls.append(query)
         ans = self.answers[query]
-        if isinstance(ans, Exception):
+        if isinstance(ans, BaseException):
             raise ans
         return ans
 
@@ -91,3 +92,51 @@ def test_geocode_empty_pending(tmp_path):
     assert len(gdf) == 0
     assert list(gdf.columns) == SCHEMAS["samples"]
     assert gdf.crs == CRS
+
+
+def test_malformed_geocoder_results_do_not_abort_batch(tmp_path):
+    cache = tmp_path / "cache.json"
+    geo = Recorder({
+        "Two": (1.0, 2.0),
+        "NoneUnc": (1.0, 2.0, None),
+        "Str": "abc",
+        "Ok": (1.0, 2.0, 3.0),
+    })
+    pend = _pending([("a", "Two", None), ("b", "NoneUnc", None), ("c", "Str", None), ("d", "Ok", None)])
+    gdf = geocode_pending(pend, geo, cache)
+    assert list(gdf["id"]) == ["d"]
+    assert gdf.attrs["geocoder_errors"] == 3
+    assert gdf.attrs["dropped_no_result"] == 0
+    stored = json.loads(cache.read_text(encoding="utf-8"))
+    assert stored == {"Ok": [1.0, 2.0, 3.0]}
+
+
+def test_invalid_uncertainty_is_rejected(tmp_path):
+    geo = Recorder({"Nan": (1.0, 2.0, float("nan")), "Neg": (1.0, 2.0, -5.0),
+                    "Inf": (1.0, 2.0, float("inf")), "Ok": (1.0, 2.0, 0.0)})
+    pend = _pending([("a", "Nan", None), ("b", "Neg", None), ("c", "Inf", None), ("d", "Ok", None)])
+    gdf = geocode_pending(pend, geo, tmp_path / "cache.json")
+    assert list(gdf["id"]) == ["d"]
+    assert gdf.attrs["dropped_no_result"] == 3
+    assert gdf.attrs["geocoder_errors"] == 0
+
+
+def test_malformed_cache_entry_is_dropped_not_crashed(tmp_path):
+    cache = tmp_path / "cache.json"
+    cache.write_text(json.dumps({"Bad": [1.0], "Worse": "x", "Ok": [1.0, 2.0, 3.0]}), encoding="utf-8")
+    geo = Recorder({})
+    pend = _pending([("a", "Bad", None), ("b", "Worse", None), ("c", "Ok", None)])
+    gdf = geocode_pending(pend, geo, cache)
+    assert geo.calls == []
+    assert list(gdf["id"]) == ["c"]
+    assert gdf.attrs["geocoder_errors"] == 2
+    assert gdf.attrs["dropped_no_result"] == 0
+
+
+def test_cache_saved_when_run_is_interrupted(tmp_path):
+    cache = tmp_path / "cache.json"
+    geo = Recorder({"First": (1.0, 2.0, 3.0), "Second": KeyboardInterrupt()})
+    pend = _pending([("a", "First", None), ("b", "Second", None)])
+    with pytest.raises(KeyboardInterrupt):
+        geocode_pending(pend, geo, cache)
+    assert json.loads(cache.read_text(encoding="utf-8")) == {"First": [1.0, 2.0, 3.0]}

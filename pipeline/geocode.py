@@ -6,6 +6,7 @@ resultado, resultado fora de faixa ou erro -> linha descartada, nunca
 adivinhada.
 """
 import json
+import math
 from pathlib import Path
 from typing import Callable
 
@@ -39,14 +40,34 @@ def _save_cache(cache: Path, data: dict) -> None:
     tmp.replace(cache)
 
 
+def _parse(result) -> list[float]:
+    """`(lat, lon, uncertainty_m)` como 3 floats; formato invalido levanta."""
+    if isinstance(result, (str, bytes)) or len(result) != 3:
+        raise ValueError(f"resultado malformado: {result!r}")
+    return [float(x) for x in result]
+
+
+def _usable(lat: float, lon: float, unc: float) -> bool:
+    """Coordenada valida e incerteza finita e >= 0."""
+    ok_coords = valid_coords(pd.Series([lat]), pd.Series([lon])).iloc[0]
+    return bool(ok_coords) and math.isfinite(unc) and unc >= 0
+
+
 def geocode_pending(pending: pd.DataFrame, geocoder: Geocoder, cache: Path) -> gpd.GeoDataFrame:
     """Geocodifica `pending` (saida de normalize_samples).
 
-    Cada consulta distinta chama o geocoder no maximo uma vez entre rodadas
-    (resultados, inclusive None, ficam no JSON `cache`; erros nao sao
-    cacheados e sao tentados de novo na proxima rodada, mas nao na mesma).
-    Contagens de linhas descartadas em `gdf.attrs`: `dropped_no_result`
-    (None ou fora de faixa) e `geocoder_errors` (excecao do geocoder).
+    Cada consulta distinta chama o geocoder no maximo uma vez entre rodadas:
+    resultados utilizaveis ficam no JSON `cache` como `[lat, lon, unc]`;
+    None e resultados bem formados mas inutilizaveis (fora de faixa,
+    incerteza NaN/inf/negativa) ficam como `null`. Excecoes e resultados
+    malformados (nao sao 3 numeros) nao sao cacheados: sao tentados de novo
+    na proxima rodada, mas nao na mesma. O cache e salvo mesmo se a rodada
+    for interrompida (a excecao e relancada).
+
+    Contagens de linhas descartadas em `gdf.attrs`:
+    - `dropped_no_result`: None ou resultado inutilizavel;
+    - `geocoder_errors`: excecao do geocoder, resultado ou entrada de cache
+      malformados.
     """
     cache = Path(cache)
     store = _load_cache(cache)
@@ -54,33 +75,39 @@ def geocode_pending(pending: pd.DataFrame, geocoder: Geocoder, cache: Path) -> g
     keep, lats, lons, uncs = [], [], [], []
     dropped_no_result = errors = 0
 
-    for idx, row in pending.iterrows():
-        query = build_query(row["locality"], row.get("country"))
-        if query in failed:
-            errors += 1
-            continue
-        if query not in store:
-            try:
-                result = geocoder(query)
-            except Exception:
-                failed.add(query)
+    try:
+        for idx, row in pending.iterrows():
+            query = build_query(row["locality"], row.get("country"))
+            if query in failed:
                 errors += 1
                 continue
-            store[query] = None if result is None else [float(x) for x in result]
-        result = store[query]
-        if result is None:
-            dropped_no_result += 1
-            continue
-        lat, lon, unc = result
-        if not valid_coords(pd.Series([lat]), pd.Series([lon])).iloc[0]:
-            dropped_no_result += 1
-            continue
-        keep.append(idx)
-        lats.append(lat)
-        lons.append(lon)
-        uncs.append(unc)
-
-    _save_cache(cache, store)
+            if query not in store:
+                try:
+                    result = geocoder(query)
+                    parsed = None if result is None else _parse(result)
+                except Exception:
+                    failed.add(query)
+                    errors += 1
+                    continue
+                store[query] = parsed if parsed is not None and _usable(*parsed) else None
+            entry = store[query]
+            if entry is None:
+                dropped_no_result += 1
+                continue
+            try:
+                lat, lon, unc = _parse(entry)
+            except (TypeError, ValueError):
+                errors += 1
+                continue
+            if not _usable(lat, lon, unc):
+                dropped_no_result += 1
+                continue
+            keep.append(idx)
+            lats.append(lat)
+            lons.append(lon)
+            uncs.append(unc)
+    finally:
+        _save_cache(cache, store)
 
     out = pending.loc[keep, [c for c in _COLS if c != "geometry"]].copy()
     out["coord_source"] = pd.Series(["geocoded"] * len(out), index=out.index, dtype="object")
