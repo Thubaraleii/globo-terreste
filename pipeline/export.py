@@ -21,11 +21,12 @@ import os
 import re
 import subprocess
 import tempfile
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import pandas as pd
-from pyogrio import read_dataframe
+from pyogrio import list_drivers, read_dataframe, write_dataframe
 from shapely.geometry import mapping
 
 from pipeline.common.model import _NUMERIC, SCHEMAS
@@ -39,6 +40,15 @@ TIPPECANOE_FLAGS = {
     "samples": ["-zg", "-r1", "--drop-densest-as-needed", "--extend-zooms-if-still-dropping"],
     "geo_units": ["-zg", "--coalesce-densest-as-needed", "--extend-zooms-if-still-dropping"],
 }
+# Fallback GDAL (sem tippecanoe): MINZOOM/MAXZOOM por camada. Medido nos dados reais
+# (ver README): amostras em z0 estouram o limite de 500 kB do tile (MAX_SIZE) e o GDAL
+# reduz a resolucao; geo_units usa simplificacao e zoom maximo baixo para caber em 95 MB.
+GDAL_PMTILES_OPTIONS = {
+    "samples": {"MINZOOM": "1", "MAXZOOM": "8"},
+    "geo_units": {"MINZOOM": "0", "MAXZOOM": "6"},
+}
+GDAL_WARNING = ("PMTiles gerados com GDAL; sem agregacao de densidade em zoom baixo; "
+                "tippecanoe recomendado")
 _INT_COLUMNS = {c for c, t in _NUMERIC.items() if t == "Int64"}
 
 
@@ -163,27 +173,36 @@ def _version_warning(tippecanoe: str, run) -> str | None:
             "(>= 2.17, nao verificado aqui); os PMTiles podem falhar")
 
 
+def _tile_frame(gpkg: Path, layer: str, result: ExportResult):
+    """Camada pronta para virar tiles (com `sample_count` / `unit_lith_class`);
+    `None` (com aviso) quando vazia."""
+    gdf = read_dataframe(gpkg, layer=layer)
+    if len(gdf) == 0:
+        result.warnings.append(f"camada {layer} vazia: {layer}.pmtiles nao gerado")
+        return None
+    if layer == "geo_units":
+        # so atributos: contar nao exige decodificar geometrias
+        samples = read_dataframe(gpkg, layer="samples", columns=["unit_id"],
+                                 read_geometry=False)
+        gdf = _with_sample_count(gdf, samples)
+    if layer == "samples":
+        # so atributos: nao decodificar milhoes de poligonos do GLiM
+        units = read_dataframe(gpkg, layer="geo_units",
+                               columns=["unit_id", "lith_class"],
+                               read_geometry=False)
+        gdf = _with_unit_lith_class(gdf, units)
+    return gdf
+
+
 def _write_tile_inputs(gpkg: Path, folder: Path, result: ExportResult) -> dict[str, Path]:
     """Escreve em `folder` o GeoJSON de entrada do tippecanoe de cada camada
     nao vazia (com `sample_count` / `unit_lith_class`); camada vazia gera aviso."""
     folder.mkdir(parents=True, exist_ok=True)
     written = {}
     for layer in PMTILES_LAYERS:
-        gdf = read_dataframe(gpkg, layer=layer)
-        if len(gdf) == 0:
-            result.warnings.append(f"camada {layer} vazia: {layer}.pmtiles nao gerado")
+        gdf = _tile_frame(gpkg, layer, result)
+        if gdf is None:
             continue
-        if layer == "geo_units":
-            # so atributos: contar nao exige decodificar geometrias
-            samples = read_dataframe(gpkg, layer="samples", columns=["unit_id"],
-                                     read_geometry=False)
-            gdf = _with_sample_count(gdf, samples)
-        if layer == "samples":
-            # so atributos: nao decodificar milhoes de poligonos do GLiM
-            units = read_dataframe(gpkg, layer="geo_units",
-                                   columns=["unit_id", "lith_class"],
-                                   read_geometry=False)
-            gdf = _with_unit_lith_class(gdf, units)
         source = folder / f"{layer}.geojson"
         _write_geojson(gdf, source)
         del gdf
@@ -191,9 +210,36 @@ def _write_tile_inputs(gpkg: Path, folder: Path, result: ExportResult) -> dict[s
     return written
 
 
+def gdal_pmtiles_available() -> bool:
+    """O GDAL embutido no pyogrio sabe escrever os drivers MVT e PMTiles?"""
+    drivers = list_drivers()
+    return "w" in drivers.get("PMTiles", "") and "w" in drivers.get("MVT", "")
+
+
+def _write_gdal_pmtiles(gpkg: Path, out_dir: Path, result: ExportResult) -> None:
+    """PMTiles via GDAL (driver PMTiles, que gera MVT -> MBTiles -> PMTiles).
+    Camada com o mesmo nome do arquivo; zooms em `GDAL_PMTILES_OPTIONS`."""
+    for layer in PMTILES_LAYERS:
+        gdf = _tile_frame(gpkg, layer, result)
+        if gdf is None:
+            continue
+        target = out_dir / f"{layer}.pmtiles"
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            write_dataframe(gdf, target, driver="PMTiles", layer=layer,
+                            dataset_options=GDAL_PMTILES_OPTIONS[layer])
+        del gdf
+        for w in caught:
+            result.warnings.append(f"GDAL ({layer}): {w.message}")
+        result.files.append(target)
+    result.warnings.append(GDAL_WARNING)
+
+
 def export_web(gpkg: Path, out_dir: Path, tippecanoe: str | None,
-               run=subprocess.run, keep_intermediate: Path | None = None) -> ExportResult:
+               run=subprocess.run, keep_intermediate: Path | None = None,
+               gdal_fallback: bool = True) -> ExportResult:
     """Escreve os arquivos da web em `out_dir`; `run` e injetavel nos testes.
+    Sem tippecanoe e com `gdal_fallback`, os PMTiles saem do GDAL do pyogrio (com aviso).
     `keep_intermediate`: pasta onde ficam os GeoJSON de entrada do tippecanoe
     (escritos mesmo sem tippecanoe, para rodar o tippecanoe a mao, ex. no WSL)."""
     gpkg, out_dir = Path(gpkg), Path(out_dir)
@@ -218,7 +264,14 @@ def export_web(gpkg: Path, out_dir: Path, tippecanoe: str | None,
                       encoding="utf-8")
     result.files.append(target)
 
-    if tippecanoe is None:
+    use_gdal = tippecanoe is None and gdal_fallback and gdal_pmtiles_available()
+    if use_gdal:
+        for layer in PMTILES_LAYERS:
+            (out_dir / f"{layer}.pmtiles").unlink(missing_ok=True)
+        _write_gdal_pmtiles(gpkg, out_dir, result)
+        if keep_intermediate is not None:
+            _write_tile_inputs(gpkg, Path(keep_intermediate), result)
+    elif tippecanoe is None:
         warning = ("tippecanoe nao encontrado: PMTiles de "
                    + ", ".join(PMTILES_LAYERS) + " nao gerados")
         stale = [out_dir / f"{layer}.pmtiles" for layer in PMTILES_LAYERS]

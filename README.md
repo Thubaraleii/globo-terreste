@@ -43,6 +43,13 @@ node scripts/vendor.mjs                                     # copia maplibre-gl 
 - `--keep-intermediate PASTA`: guarda na pasta os GeoJSON de entrada do tippecanoe (`geo_units.geojson`, `samples.geojson`), mesmo sem tippecanoe, para gerar os PMTiles à mão.
 - O resumo mostra, por fonte, as contagens do normalizador (por exemplo `dropped_no_coords`), inclusive para fontes reaproveitadas do cache.
 
+### PMTiles sem tippecanoe (fallback GDAL)
+
+Sem tippecanoe (`--tippecanoe ""` ou binário ausente), `export_web` gera `samples.pmtiles` e `geo_units.pmtiles` com o GDAL 3.12 embutido no pyogrio (driver `PMTiles`, que passa por MVT/MBTiles; nenhuma instalação extra). A camada tem o mesmo nome do arquivo e as mesmas propriedades do caminho tippecanoe (`unit_lith_class`, `sample_count`). O build emite o aviso "PMTiles gerados com GDAL; sem agregação de densidade em zoom baixo; tippecanoe recomendado". Medido nos dados reais (93 220 unidades, 117 761 amostras):
+
+- `samples.pmtiles`: zoom 1–8, ~10 MB, ~150 s. Em zoom 0 o tile único estoura o limite de 500 kB do GDAL (`MAX_SIZE`) e 40% das amostras sumiam, por isso o mínimo é 1; mesmo em zoom 1 o GDAL reduz a resolução das coordenadas, sem descartar amostras (todas as 117 761 estão presentes). Não há agregação por densidade: o heatmap da web (zoom < 8) é desenhado com todos os pontos.
+- `geo_units.pmtiles`: zoom 0–6, ~23 MB, ~100 s. O GDAL simplifica e descarta polígonos menores que um pixel do tile: no zoom 0 restam ~21 mil de 93 mil unidades, no zoom 2 ~58 mil, no zoom 4 ~87 mil e no zoom 6 todas. Acima do zoom 6 o MapLibre amplia o tile do zoom 6 (borda grosseira, ~150 m por unidade de tile; a fonte GLiM tem escala ~1:3,75 milhões, então não há detalhe real a perder).
+
 ### tippecanoe no Windows (WSL)
 
 Um Python do Windows **não consegue** executar um tippecanoe instalado dentro do WSL via `--tippecanoe`. Há dois caminhos:
