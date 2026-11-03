@@ -2,6 +2,7 @@
 
 - `volcanoes` e `tectonic_zones` (camadas pequenas) viram GeoJSON
   (`volcanoes.geojson`, `tectonic_zones.geojson`); nulo continua `null`.
+- A tabela `sources` vira `sources.json` (array JSON, uma linha por fonte).
 - `geo_units` e `samples` viram PMTiles (`geo_units.pmtiles`,
   `samples.pmtiles`) via tippecanoe, chamado sem shell. Sem tippecanoe,
   os PMTiles sao pulados com aviso (nunca falha por isso).
@@ -20,7 +21,7 @@ import pandas as pd
 from pyogrio import read_dataframe
 from shapely.geometry import mapping
 
-from pipeline.common.model import _NUMERIC
+from pipeline.common.model import _NUMERIC, SCHEMAS
 
 GEOJSON_LAYERS = ("volcanoes", "tectonic_zones")
 PMTILES_LAYERS = ("geo_units", "samples")
@@ -105,6 +106,16 @@ def export_web(gpkg: Path, out_dir: Path, tippecanoe: str | None,
         target = out_dir / f"{layer}.geojson"
         _write_geojson(read_dataframe(gpkg, layer=layer), target)
         result.files.append(target)
+
+    # Tabela `sources` (sem geometria) para o painel de detalhes da web.
+    cols = SCHEMAS["sources"]
+    table = read_dataframe(gpkg, layer="sources", columns=cols)[cols]
+    rows = [{c: _value(v, c) for c, v in zip(cols, row)}
+            for row in table.itertuples(index=False, name=None)]
+    target = out_dir / "sources.json"
+    target.write_text(json.dumps(rows, ensure_ascii=False, allow_nan=False, indent=2),
+                      encoding="utf-8")
+    result.files.append(target)
 
     if tippecanoe is None:
         warning = ("tippecanoe nao encontrado: PMTiles de "

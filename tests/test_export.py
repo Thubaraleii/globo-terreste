@@ -106,7 +106,7 @@ def test_export_without_tippecanoe_warns_and_skips_pmtiles(tmp_path):
     res = export_web(_gpkg(tmp_path), out, tippecanoe=None)
     assert not (out / "geo_units.pmtiles").exists()
     assert not (out / "samples.pmtiles").exists()
-    assert all(p.suffix == ".geojson" for p in res.files)
+    assert not [p for p in res.files if p.suffix == ".pmtiles"]
     assert any("tippecanoe" in w for w in res.warnings)
 
 
@@ -218,6 +218,43 @@ def test_sample_count_zero_when_samples_empty(tmp_path):
                tippecanoe="tippecanoe", run=_capture_run(seen))
     counts = [f["properties"]["sample_count"] for f in seen["geo_units"]["features"]]
     assert counts == [0] and type(counts[0]) is int
+
+
+def test_export_writes_sources_json(tmp_path):
+    g = _gpkg(tmp_path)
+    write_layer(g, "sources", pd.DataFrame([
+        {"source_id": "gvp", "institution": "Smithsonian", "source_url": "https://x/gvp",
+         "license": "CC-BY-4.0", "attribution": "GVP", "acquisition_date": "2026-10-01",
+         "original_scale": "1:1000000"},
+        {"source_id": "glim", "institution": "Univ. Hamburg", "source_url": None,
+         "license": None, "attribution": "GLiM", "acquisition_date": "2026-10-02",
+         "original_scale": None},
+    ]))
+    out = tmp_path / "web"
+    res = export_web(g, out, tippecanoe=None)
+    assert out / "sources.json" in res.files
+    text = (out / "sources.json").read_text(encoding="utf-8")
+    assert "NaN" not in text
+    data = json.loads(text)
+    assert data == [
+        {"source_id": "gvp", "institution": "Smithsonian", "source_url": "https://x/gvp",
+         "license": "CC-BY-4.0", "attribution": "GVP", "acquisition_date": "2026-10-01",
+         "original_scale": "1:1000000"},
+        {"source_id": "glim", "institution": "Univ. Hamburg", "source_url": None,
+         "license": None, "attribution": "GLiM", "acquisition_date": "2026-10-02",
+         "original_scale": None},
+    ]
+    assert list(data[0]) == [
+        "source_id", "institution", "source_url", "license",
+        "attribution", "acquisition_date", "original_scale",
+    ]
+
+
+def test_empty_sources_table_gives_empty_array(tmp_path):
+    out = tmp_path / "web"
+    res = export_web(_gpkg(tmp_path), out, tippecanoe=None)
+    assert out / "sources.json" in res.files
+    assert json.loads((out / "sources.json").read_text(encoding="utf-8")) == []
 
 
 def test_unit_lith_class_all_null_when_geo_units_empty(tmp_path):
