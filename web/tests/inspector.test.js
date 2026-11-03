@@ -147,16 +147,26 @@ test('test_render_volcano_escapes_and_shows_source', () => {
 
 test('test_render_zone_shows_rank_moment_and_period', () => {
   const html = renderZone({
-    rank: 1, name: 'Zona "A" <b>', moment_total: 1.234e21,
+    rank: 1, name: 'Zona "A" <b>', moment_total: '3.981e+19', moment_log10: 19.6,
     period_start: '1990-01-01', period_end: '2020-12-31', source_id: 'x',
   });
   assert.match(html, /<dd>1<\/dd>/);
-  assert.ok(html.includes('1,23 × 10^21 N·m'));
+  assert.ok(html.includes('3,981 × 10^19 N·m'));
+  assert.ok(html.includes('log10 = 19,6'));
+  assert.ok(renderZone({ moment_total: '1.230e+21', moment_log10: 21 }).includes('1,230 × 10^21 N·m'));
+  assert.ok(renderZone({ moment_total: '5.000e-03' }).includes('5,000 × 10^-3 N·m'));
   assert.ok(html.includes('1990-01-01'));
   assert.ok(html.includes('2020-12-31'));
   assert.ok(html.includes('Zona &quot;A&quot; &lt;b&gt;'));
   assertOnlyOwnTags(html);
-  const empty = renderZone({ rank: null, moment_total: null, period_start: null, period_end: null });
+  const empty = renderZone({ rank: null, moment_total: null, moment_log10: null, period_start: null, period_end: null });
   assert.ok(!empty.includes('null'));
   assert.ok(empty.includes(NAO_INFORMADO));
+  assert.ok(!empty.includes('log10'));
+  // texto fora do formato: mostrado escapado, como veio
+  const odd = renderZone({ moment_total: '<b>1e19</b> "x"', moment_log10: NaN });
+  assert.ok(odd.includes('&lt;b&gt;1e19&lt;/b&gt; &quot;x&quot;'));
+  assert.ok(!odd.includes('× 10^'));
+  assert.ok(!odd.includes('log10'));
+  assertOnlyOwnTags(odd);
 });

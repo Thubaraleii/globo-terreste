@@ -81,12 +81,19 @@ function formatMeters(v) {
   return typeof v === 'number' && Number.isFinite(v) ? `${esc(v.toLocaleString('pt-BR'))} m` : show(v);
 }
 
-// Momento sismico em N·m, notacao cientifica com virgula decimal.
+// Momento sismico em N·m. A exportacao manda texto ("3.981e+19"), porque numeros
+// inteiros >= 2^64 quebram o worker do MapLibre. Formato reconhecido vira
+// "3,981 × 10^19 N·m"; outro texto aparece escapado, como veio.
+const MOMENT = /^([+-]?\d+(?:\.\d+)?)e([+-]?\d{1,3})$/i;
+
 function formatMoment(v) {
-  if (typeof v !== 'number' || !Number.isFinite(v)) return show(v);
-  const [mant, exp] = v.toExponential(2).split('e');
-  return esc(`${mant.replace('.', ',')} × 10^${Number(exp)} N·m`);
+  if (typeof v !== 'string') return show(v);
+  const m = MOMENT.exec(v);
+  if (!m) return show(v);
+  return esc(`${m[1].replace('.', ',')} × 10^${Number(m[2])} N·m`);
 }
+
+const formatDecimal = (v) => esc(String(v).replace('.', ','));
 
 // `opts.source`: registro da fonte da amostra; `opts.unitLithOriginal`: litologia
 // original da unidade que contem o ponto (se conhecida); `opts.unitSource`: fonte
@@ -164,7 +171,9 @@ export function renderZone(props, opts = {}) {
     list([
       row('Nome', show(p.name)),
       row('Posição no ranking', show(p.rank)),
-      row('Momento sísmico total', formatMoment(p.moment_total)),
+      row('Momento sísmico total', formatMoment(p.moment_total)
+        + (typeof p.moment_log10 === 'number' && Number.isFinite(p.moment_log10)
+          ? ` (log10 = ${formatDecimal(p.moment_log10)})` : '')),
       row('Período dos sismos', `${show(p.period_start)} a ${show(p.period_end)}`),
     ]),
     '<p class="details-note">O ranking ordena as zonas pela soma do momento sísmico dos sismos atribuídos a cada uma no período indicado.</p>',

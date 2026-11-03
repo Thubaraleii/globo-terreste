@@ -92,6 +92,51 @@ def test_geojson_nulls_stay_null(tmp_path):
     assert vprops["name"] is None and vprops["country"] is None
 
 
+def _zones_gpkg(tmp_path, moments):
+    g = tmp_path / "zones.gpkg"
+    create_geopackage(g)
+    n = len(moments)
+    write_layer(g, "tectonic_zones", gpd.GeoDataFrame(
+        {
+            "rank": pd.array(list(range(1, n + 1)), dtype="Int64"),
+            "name": [f"z{i}" for i in range(n)],
+            "moment_total": moments,
+            "source_id": ["tz"] * n,
+        },
+        geometry=[LineString([(i, 0), (i, 1)]) for i in range(n)], crs=CRS,
+    ))
+    return g
+
+
+def test_moment_total_exported_as_string_and_log10(tmp_path):
+    out = tmp_path / "web"
+    g = _zones_gpkg(tmp_path, [3.98e19, 1.2e23, None, 0.0, 1e21])
+    export_web(g, out, tippecanoe=None)
+    props = [f["properties"] for f in _read(out / "tectonic_zones.geojson")["features"]]
+    assert [p["moment_total"] for p in props] == ["3.980e+19", "1.200e+23", None, None, "1.000e+21"]
+    assert [p["moment_log10"] for p in props] == [19.6, 23.079, None, None, 21.0]
+    assert isinstance(props[0]["moment_total"], str)
+    # inteiro "redondo" tambem e escrito (pequeno, seguro para o MapLibre)
+    assert "moment_log10" in props[4] and props[4]["moment_log10"] == 21
+    text = (out / "tectonic_zones.geojson").read_text(encoding="utf-8")
+    assert '"moment_log10": 21.0' in text
+
+
+def test_moment_values_non_positive_or_non_finite_are_null():
+    for bad in [None, 0.0, -5.0, float("nan"), float("inf"), float("-inf")]:
+        assert export._moment_props(bad) == {"moment_total": None, "moment_log10": None}
+
+
+def test_gpkg_tectonic_zones_unchanged_by_export(tmp_path):
+    g = _zones_gpkg(tmp_path, [3.98e19, None])
+    export_web(g, tmp_path / "web", tippecanoe=None)
+    t = read_dataframe(g, layer="tectonic_zones")
+    assert "moment_log10" not in t.columns
+    assert t["moment_total"].dtype == "float64"
+    assert t["moment_total"].iloc[0] == 3.98e19
+    assert pd.isna(t["moment_total"].iloc[1])
+
+
 def test_empty_layer_gives_valid_empty_feature_collection(tmp_path):
     g = tmp_path / "empty.gpkg"
     create_geopackage(g)

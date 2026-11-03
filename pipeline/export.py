@@ -2,6 +2,8 @@
 
 - `volcanoes` e `tectonic_zones` (camadas pequenas) viram GeoJSON
   (`volcanoes.geojson`, `tectonic_zones.geojson`); nulo continua `null`.
+  Em `tectonic_zones.geojson`, `moment_total` vira texto ("3.981e+19") e
+  ganha `moment_log10` (ver `_moment_props`).
 - A tabela `sources` vira `sources.json` (array JSON, uma linha por fonte).
 - `geo_units` e `samples` viram PMTiles (`geo_units.pmtiles`,
   `samples.pmtiles`) via tippecanoe, chamado sem shell. Sem tippecanoe,
@@ -90,6 +92,33 @@ def _with_sample_count(units, samples):
     return out
 
 
+def _moment_props(v) -> dict:
+    """`moment_total` (N*m) para a web: texto em notacao cientifica com 4
+    algarismos significativos e `moment_log10` (3 casas). Nulo se o valor for
+    nulo, nao finito ou <= 0. Motivo: o worker do MapLibre grava numeros
+    inteiros das propriedades GeoJSON como varint, e valores >= 2^64 (momentos
+    sismicos reais passam de 1e19) quebram a camada."""
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        x = math.nan
+    if not math.isfinite(x) or x <= 0:
+        return {"moment_total": None, "moment_log10": None}
+    return {"moment_total": f"{x:.3e}", "moment_log10": round(math.log10(x), 3)}
+
+
+def _with_moment_strings(zones):
+    """Copia de `zones` com `moment_total` como texto e `moment_log10` (so para
+    exportar; o GeoPackage continua com o float)."""
+    out = zones.copy()
+    props = [_moment_props(v) for v in out["moment_total"]]
+    out["moment_total"] = pd.Series([p["moment_total"] for p in props], index=out.index, dtype=object)
+    pos = out.columns.get_loc("moment_total") + 1
+    out.insert(pos, "moment_log10",
+               pd.Series([p["moment_log10"] for p in props], index=out.index, dtype=object))
+    return out
+
+
 def _write_geojson(gdf, path: Path) -> None:
     text = json.dumps(_feature_collection(gdf), ensure_ascii=False, allow_nan=False)
     Path(path).write_text(text, encoding="utf-8")
@@ -104,7 +133,10 @@ def export_web(gpkg: Path, out_dir: Path, tippecanoe: str | None,
 
     for layer in GEOJSON_LAYERS:
         target = out_dir / f"{layer}.geojson"
-        _write_geojson(read_dataframe(gpkg, layer=layer), target)
+        gdf = read_dataframe(gpkg, layer=layer)
+        if layer == "tectonic_zones":
+            gdf = _with_moment_strings(gdf)
+        _write_geojson(gdf, target)
         result.files.append(target)
 
     # Tabela `sources` (sem geometria) para o painel de detalhes da web.
