@@ -48,14 +48,31 @@ def _read(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-class FakeRunner:
-    """Registra os comandos e cria o arquivo de saida (-o) como o tippecanoe."""
+def _version_ok(cmd, text=b"tippecanoe v2.53.0\n"):
+    """Resposta de `tippecanoe --version` (o tippecanoe escreve a versao no stderr)."""
+    return subprocess.CompletedProcess(cmd, 0, b"", text)
 
-    def __init__(self):
+
+class FakeRunner:
+    """Registra os comandos e cria o arquivo de saida (-o) como o tippecanoe.
+    `--version` vai para `version_calls` e responde `version`."""
+
+    def __init__(self, version=b"tippecanoe v2.53.0\n", fail_layer=None, stderr=b""):
         self.calls = []
+        self.version_calls = []
+        self.version = version
+        self.fail_layer = fail_layer
+        self.stderr = stderr
 
     def __call__(self, cmd, **kwargs):
+        if "--version" in cmd:
+            self.version_calls.append((list(cmd), kwargs))
+            if isinstance(self.version, BaseException):
+                raise self.version
+            return _version_ok(cmd, self.version)
         self.calls.append((list(cmd), kwargs))
+        if self.fail_layer and cmd[cmd.index("-l") + 1] == self.fail_layer:
+            raise subprocess.CalledProcessError(1, cmd, output=b"", stderr=self.stderr)
         Path(cmd[cmd.index("-o") + 1]).write_bytes(b"PMTiles")
         return subprocess.CompletedProcess(cmd, 0, b"", b"")
 
@@ -171,23 +188,89 @@ def test_tippecanoe_command_built_without_shell(tmp_path):
     run = FakeRunner()
     res = export_web(_gpkg(tmp_path), out, tippecanoe="/opt/bin/tippecanoe", run=run)
     assert len(run.calls) == 2
+    flags = {
+        "geo_units": ["-zg", "--coalesce-densest-as-needed", "--extend-zooms-if-still-dropping"],
+        "samples": ["-zg", "-r1", "--drop-densest-as-needed", "--extend-zooms-if-still-dropping"],
+    }
     for (cmd, kwargs), layer in zip(run.calls, ["geo_units", "samples"]):
-        assert cmd[:7] == [
+        assert cmd[:-1] == [
             "/opt/bin/tippecanoe", "-o", str(out / f"{layer}.pmtiles"),
-            "-zg", "--drop-densest-as-needed", "-l", layer,
+            *flags[layer], "-l", layer,
         ]
-        assert len(cmd) == 8 and cmd[7].endswith(".geojson")
+        assert cmd[-1].endswith(f"{layer}.geojson")
         assert kwargs.get("shell", False) is False
         assert kwargs["check"] is True and kwargs["capture_output"] is True
     assert out / "geo_units.pmtiles" in res.files
     assert out / "samples.pmtiles" in res.files
     assert res.warnings == []
+    # a versao e conferida uma vez, pelo mesmo runner, sem shell
+    assert [c for c, _ in run.version_calls] == [["/opt/bin/tippecanoe", "--version"]]
+    assert run.version_calls[0][1].get("shell", False) is False
+
+
+def test_tippecanoe_failure_surfaces_stderr(tmp_path):
+    run = FakeRunner(fail_layer="samples", stderr="erro: memória insuficiente\n".encode())
+    with pytest.raises(RuntimeError) as exc:
+        export_web(_gpkg(tmp_path), tmp_path / "web", tippecanoe="tippecanoe", run=run)
+    msg = str(exc.value)
+    assert "samples" in msg and "erro: memória insuficiente" in msg
+    assert isinstance(exc.value.__cause__, subprocess.CalledProcessError)
+
+
+@pytest.mark.parametrize("version", [
+    b"tippecanoe v2.16.0\n", b"tippecanoe v1.36.0\n", b"???\n", b"",
+    FileNotFoundError("sem binario"), subprocess.CalledProcessError(1, ["t"]),
+])
+def test_old_or_unparseable_tippecanoe_version_warns(tmp_path, version):
+    run = FakeRunner(version=version)
+    res = export_web(_gpkg(tmp_path), tmp_path / "web", tippecanoe="tippecanoe", run=run)
+    warn = [w for w in res.warnings if "2.17" in w]
+    assert len(warn) == 1 and "PMTiles" in warn[0]
+    assert len(run.calls) == 2  # aviso, nao erro
+
+
+@pytest.mark.parametrize("version", [b"tippecanoe v2.17.0\n", b"v2.53.0", b"tippecanoe v3.0\n"])
+def test_recent_tippecanoe_version_does_not_warn(tmp_path, version):
+    run = FakeRunner(version=version)
+    res = export_web(_gpkg(tmp_path), tmp_path / "web", tippecanoe="tippecanoe", run=run)
+    assert res.warnings == []
+
+
+def test_parse_tippecanoe_version():
+    assert export._parse_version("tippecanoe v2.53.0") == (2, 53, 0)
+    assert export._parse_version("2.17") == (2, 17, 0)
+    assert export._parse_version("nada") is None
+
+
+def test_keep_intermediate_without_tippecanoe_writes_inputs(tmp_path):
+    keep = tmp_path / "inter"
+    out = tmp_path / "web"
+    res = export_web(_gpkg(tmp_path), out, tippecanoe=None, keep_intermediate=keep)
+    units = _read(keep / "geo_units.geojson")
+    samples = _read(keep / "samples.geojson")
+    assert units["features"][0]["properties"]["sample_count"] == 0  # amostra sem unit_id
+    assert "unit_lith_class" in samples["features"][0]["properties"]
+    assert not (out / "geo_units.pmtiles").exists()
+    assert any("tippecanoe" in w for w in res.warnings)
+    assert any(str(keep) in w for w in res.warnings)
+
+
+def test_keep_intermediate_with_tippecanoe_keeps_the_input_files(tmp_path):
+    keep = tmp_path / "inter"
+    run = FakeRunner()
+    export_web(_gpkg(tmp_path), tmp_path / "web", tippecanoe="tippecanoe", run=run,
+               keep_intermediate=keep)
+    assert [c[-1] for c, _ in run.calls] == [str(keep / "geo_units.geojson"),
+                                            str(keep / "samples.geojson")]
+    assert (keep / "geo_units.geojson").exists() and (keep / "samples.geojson").exists()
 
 
 def test_tippecanoe_input_is_the_layer_as_geojson(tmp_path):
     seen = {}
 
     def run(cmd, **kwargs):
+        if "--version" in cmd:
+            return _version_ok(cmd)
         seen[cmd[cmd.index("-l") + 1]] = _read(Path(cmd[-1]))
         Path(cmd[cmd.index("-o") + 1]).write_bytes(b"")
         return subprocess.CompletedProcess(cmd, 0)
@@ -212,6 +295,8 @@ def test_samples_tiles_carry_unit_lith_class(tmp_path):
     seen = {}
 
     def run(cmd, **kwargs):
+        if "--version" in cmd:
+            return _version_ok(cmd)
         seen[cmd[cmd.index("-l") + 1]] = _read(Path(cmd[-1]))
         Path(cmd[cmd.index("-o") + 1]).write_bytes(b"")
         return subprocess.CompletedProcess(cmd, 0)
@@ -229,6 +314,8 @@ def test_samples_tiles_carry_unit_lith_class(tmp_path):
 
 def _capture_run(seen):
     def run(cmd, **kwargs):
+        if "--version" in cmd:
+            return _version_ok(cmd)
         seen[cmd[cmd.index("-l") + 1]] = _read(Path(cmd[-1]))
         Path(cmd[cmd.index("-o") + 1]).write_bytes(b"")
         return subprocess.CompletedProcess(cmd, 0)
@@ -306,6 +393,8 @@ def test_unit_lith_class_all_null_when_geo_units_empty(tmp_path):
     seen = {}
 
     def run(cmd, **kwargs):
+        if "--version" in cmd:
+            return _version_ok(cmd)
         seen[cmd[cmd.index("-l") + 1]] = _read(Path(cmd[-1]))
         Path(cmd[cmd.index("-o") + 1]).write_bytes(b"")
         return subprocess.CompletedProcess(cmd, 0)

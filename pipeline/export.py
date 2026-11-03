@@ -6,14 +6,19 @@
   ganha `moment_log10` (ver `_moment_props`).
 - A tabela `sources` vira `sources.json` (array JSON, uma linha por fonte).
 - `geo_units` e `samples` viram PMTiles (`geo_units.pmtiles`,
-  `samples.pmtiles`) via tippecanoe, chamado sem shell. Sem tippecanoe,
-  os PMTiles sao pulados com aviso (nunca falha por isso).
+  `samples.pmtiles`) via tippecanoe, chamado sem shell, com as flags de
+  `TIPPECANOE_FLAGS`. Sem tippecanoe, os PMTiles sao pulados com aviso (nunca
+  falha por isso). Falha do tippecanoe vira RuntimeError com o stderr dele.
+  Versao do tippecanoe ilegivel ou < 2.17 gera aviso.
+- `keep_intermediate`: guarda os GeoJSON de entrada do tippecanoe nessa pasta
+  (mesmo sem tippecanoe), para gerar os PMTiles a mao.
 - Qualquer arquivo produzido acima de 95 MB gera aviso (limite de 100 MB
   por arquivo do GitHub Pages).
 """
 import json
 import math
 import os
+import re
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
@@ -28,6 +33,12 @@ from pipeline.common.model import _NUMERIC, SCHEMAS
 GEOJSON_LAYERS = ("volcanoes", "tectonic_zones")
 PMTILES_LAYERS = ("geo_units", "samples")
 MAX_BYTES = 95 * 1024 * 1024
+MIN_TIPPECANOE = (2, 17, 0)
+# Flags por camada (alem de -o <arquivo>.pmtiles e -l <camada>).
+TIPPECANOE_FLAGS = {
+    "samples": ["-zg", "-r1", "--drop-densest-as-needed", "--extend-zooms-if-still-dropping"],
+    "geo_units": ["-zg", "--coalesce-densest-as-needed", "--extend-zooms-if-still-dropping"],
+}
 _INT_COLUMNS = {c for c, t in _NUMERIC.items() if t == "Int64"}
 
 
@@ -124,9 +135,67 @@ def _write_geojson(gdf, path: Path) -> None:
     Path(path).write_text(text, encoding="utf-8")
 
 
+def _text(v) -> str:
+    if v is None:
+        return ""
+    return v.decode("utf-8", errors="replace") if isinstance(v, bytes) else str(v)
+
+
+def _parse_version(text: str) -> tuple[int, int, int] | None:
+    m = re.search(r"(\d+)\.(\d+)(?:\.(\d+))?", text or "")
+    if not m:
+        return None
+    return int(m[1]), int(m[2]), int(m[3] or 0)
+
+
+def _version_warning(tippecanoe: str, run) -> str | None:
+    """Roda `tippecanoe --version` pelo mesmo runner. Versao ilegivel ou abaixo de
+    2.17 gera AVISO (nao erro): a saida .pmtiles exige um tippecanoe recente."""
+    try:
+        proc = run([tippecanoe, "--version"], check=False, capture_output=True)
+        found = _parse_version(_text(proc.stdout) + " " + _text(proc.stderr))
+    except (OSError, subprocess.SubprocessError):
+        found = None
+    if found is not None and found >= MIN_TIPPECANOE:
+        return None
+    seen = ".".join(map(str, found)) if found else "nao identificada"
+    return (f"versao do tippecanoe {seen}: a saida PMTiles exige um tippecanoe recente "
+            "(>= 2.17, nao verificado aqui); os PMTiles podem falhar")
+
+
+def _write_tile_inputs(gpkg: Path, folder: Path, result: ExportResult) -> dict[str, Path]:
+    """Escreve em `folder` o GeoJSON de entrada do tippecanoe de cada camada
+    nao vazia (com `sample_count` / `unit_lith_class`); camada vazia gera aviso."""
+    folder.mkdir(parents=True, exist_ok=True)
+    written = {}
+    for layer in PMTILES_LAYERS:
+        gdf = read_dataframe(gpkg, layer=layer)
+        if len(gdf) == 0:
+            result.warnings.append(f"camada {layer} vazia: {layer}.pmtiles nao gerado")
+            continue
+        if layer == "geo_units":
+            # so atributos: contar nao exige decodificar geometrias
+            samples = read_dataframe(gpkg, layer="samples", columns=["unit_id"],
+                                     read_geometry=False)
+            gdf = _with_sample_count(gdf, samples)
+        if layer == "samples":
+            # so atributos: nao decodificar milhoes de poligonos do GLiM
+            units = read_dataframe(gpkg, layer="geo_units",
+                                   columns=["unit_id", "lith_class"],
+                                   read_geometry=False)
+            gdf = _with_unit_lith_class(gdf, units)
+        source = folder / f"{layer}.geojson"
+        _write_geojson(gdf, source)
+        del gdf
+        written[layer] = source
+    return written
+
+
 def export_web(gpkg: Path, out_dir: Path, tippecanoe: str | None,
-               run=subprocess.run) -> ExportResult:
-    """Escreve os arquivos da web em `out_dir`; `run` e injetavel nos testes."""
+               run=subprocess.run, keep_intermediate: Path | None = None) -> ExportResult:
+    """Escreve os arquivos da web em `out_dir`; `run` e injetavel nos testes.
+    `keep_intermediate`: pasta onde ficam os GeoJSON de entrada do tippecanoe
+    (escritos mesmo sem tippecanoe, para rodar o tippecanoe a mao, ex. no WSL)."""
     gpkg, out_dir = Path(gpkg), Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     result = ExportResult()
@@ -159,36 +228,36 @@ def export_web(gpkg: Path, out_dir: Path, tippecanoe: str | None,
         if stale:
             warning += "; obsoletos removidos: " + ", ".join(p.name for p in stale)
         result.warnings.append(warning)
+        if keep_intermediate is not None:
+            written = _write_tile_inputs(gpkg, Path(keep_intermediate), result)
+            if written:
+                result.warnings.append(
+                    f"entradas do tippecanoe mantidas em {keep_intermediate}: "
+                    + ", ".join(p.name for p in written.values())
+                    + " (rode o tippecanoe a mao para gerar os PMTiles)")
     else:
+        old = _version_warning(tippecanoe, run)
+        if old:
+            result.warnings.append(old)
         with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(keep_intermediate) if keep_intermediate is not None else Path(tmp)
             for layer in PMTILES_LAYERS:
-                gdf = read_dataframe(gpkg, layer=layer)
                 target = out_dir / f"{layer}.pmtiles"
                 if target.exists():
                     # tippecanoe nao sobrescreve sem --force; e um arquivo
                     # antigo de camada agora vazia nao deve ser publicado
                     target.unlink()
-                if len(gdf) == 0:
-                    result.warnings.append(f"camada {layer} vazia: {layer}.pmtiles nao gerado")
-                    continue
-                if layer == "geo_units":
-                    # so atributos: contar nao exige decodificar geometrias
-                    samples = read_dataframe(gpkg, layer="samples", columns=["unit_id"],
-                                             read_geometry=False)
-                    gdf = _with_sample_count(gdf, samples)
-                if layer == "samples":
-                    # so atributos: nao decodificar milhoes de poligonos do GLiM
-                    units = read_dataframe(gpkg, layer="geo_units",
-                                           columns=["unit_id", "lith_class"],
-                                           read_geometry=False)
-                    gdf = _with_unit_lith_class(gdf, units)
-                source = Path(tmp) / f"{layer}.geojson"
-                _write_geojson(gdf, source)
-                run(
-                    [tippecanoe, "-o", str(target), "-zg", "--drop-densest-as-needed",
-                     "-l", layer, str(source)],
-                    check=True, capture_output=True,
-                )
+            for layer, source in _write_tile_inputs(gpkg, folder, result).items():
+                target = out_dir / f"{layer}.pmtiles"
+                cmd = [tippecanoe, "-o", str(target), *TIPPECANOE_FLAGS[layer],
+                       "-l", layer, str(source)]
+                try:
+                    run(cmd, check=True, capture_output=True)
+                except subprocess.CalledProcessError as e:
+                    raise RuntimeError(
+                        f"tippecanoe falhou ao gerar {target.name} (codigo {e.returncode}): "
+                        + _text(e.stderr).strip()
+                    ) from e
                 result.files.append(target)
 
     for path in result.files:
