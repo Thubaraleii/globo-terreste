@@ -5,7 +5,7 @@ Pipeline Python + globo web estático para dados geológicos. Este é o **primei
 - **World Geology**: unidades geológicas (litologia), zonas tectônicas ranqueadas por momento sísmico, vulcões e hotspots.
 - **World Rocks**: amostras de rocha (máficas e ultramáficas), com filtros por classe, nome da rocha e origem da coordenada.
 
-O pipeline lê as fontes, normaliza, remove duplicatas e exporta GeoJSON e PMTiles. O globo (MapLibre GL) lê esses arquivos de `web/data/`.
+O pipeline lê as fontes, normaliza, liga as amostras duplicadas entre fontes pelo campo `dup_group` (nunca apaga nenhuma) e exporta GeoJSON e PMTiles. O globo (MapLibre GL) lê esses arquivos de `web/data/`.
 
 > Estado atual: o código está pronto, mas **nenhuma fonte real foi baixada ainda**. Os testes usam apenas dados sintéticos e fixtures pequenas (veja "O que foi e o que não foi verificado").
 
@@ -14,7 +14,7 @@ O pipeline lê as fontes, normaliza, remove duplicatas e exporta GeoJSON e PMTil
 | Pasta | Conteúdo |
 |---|---|
 | `pipeline/` | Pipeline Python (`python -m pipeline.build`): leitura das fontes, junção, deduplicação, geocodificação, exportação |
-| `data/` | `data/curated/` (tabelas curadas à mão: mapeamento de rochas, hotspots), `data/raw/` (downloads, ignorado pelo git), `data/out/` (saída do pipeline) |
+| `data/` | `data/curated/` (tabelas curadas à mão: mapeamento de rochas, hotspots), `data/raw/` (downloads, ignorado pelo git), `data/out/` (saída do pipeline, ignorada pelo git: pode ser grande e conter dados de terceiros) |
 | `web/` | Globo estático: `index.html`, `js/`, `css/`, `vendor/` (MapLibre e PMTiles copiados do npm), `tests/` (testes Node), `data/` (dados publicados, ignorado pelo git) |
 | `tests/` | Testes Python (pytest), fixtures e o teste de fumaça de ponta a ponta em `tests/e2e/` |
 | `docs/` | Especificação e plano de implementação (`docs/superpowers/`) |
@@ -35,9 +35,23 @@ node scripts/vendor.mjs                                     # copia maplibre-gl 
 ```
 
 - A lista `SOURCES` em `pipeline/build.py` está **vazia**: sem fontes registradas o comando só avisa e sai. A ligação das fontes reais (URLs, colunas, licenças) faz parte da fase de aquisição de dados.
-- `--allow-network`: permite as etapas de rede (download e geocodificação). Sem a flag, nada acessa a rede.
+- `--allow-network`: deixa rodar as fontes marcadas com `needs_network` (por exemplo, a geocodificação). **Não existe código de download**: os arquivos brutos são colocados à mão em `data/raw/`, e a flag nunca os obtém: com ela, um arquivo bruto ausente é erro, como em qualquer fonte local. Sem a flag, as fontes `needs_network` ficam como `skipped_network` (sem ler o arquivo).
 - `--force`: reprocessa todas as fontes, ignorando o cache.
-- `--tippecanoe CAMINHO`: caminho do tippecanoe (padrão: o do PATH). Sem ele, os PMTiles não são gerados.
+- `--tippecanoe CAMINHO`: caminho do tippecanoe (padrão: o do PATH). Sem ele, os PMTiles não são gerados. A saída `.pmtiles` exige um tippecanoe recente (≥ 2.17, não verificado aqui); versão mais antiga ou ilegível gera um aviso.
+- `--keep-intermediate PASTA`: guarda na pasta os GeoJSON de entrada do tippecanoe (`geo_units.geojson`, `samples.geojson`), mesmo sem tippecanoe, para gerar os PMTiles à mão.
+- O resumo mostra, por fonte, as contagens do normalizador (por exemplo `dropped_no_coords`), inclusive para fontes reaproveitadas do cache.
+
+### tippecanoe no Windows (WSL)
+
+Um Python do Windows **não consegue** executar um tippecanoe instalado dentro do WSL via `--tippecanoe`. Há dois caminhos:
+
+1. Rodar o pipeline inteiro dentro do WSL (Python, `.venv` e tippecanoe no Linux).
+2. Rodar o pipeline no Windows com `--keep-intermediate data/out/tiles_in` e depois, no WSL, gerar os PMTiles com as mesmas flags que o pipeline usaria:
+
+```
+tippecanoe -o geo_units.pmtiles -zg --coalesce-densest-as-needed --extend-zooms-if-still-dropping -l geo_units data/out/tiles_in/geo_units.geojson
+tippecanoe -o samples.pmtiles -zg -r1 --drop-densest-as-needed --extend-zooms-if-still-dropping -l samples data/out/tiles_in/samples.geojson
+```
 
 ## Publicar os dados no globo
 
@@ -72,7 +86,7 @@ npm run test:e2e                               # = playwright test (teste de fum
 - O e2e usa o **Microsoft Edge** já instalado (`channel: 'msedge'`); com `GEOWORLD_BROWSER=chrome` usa o Chrome. Ele **não baixa navegador**: não rode `npx playwright install`.
 - O e2e sobe esse mesmo servidor estático em `127.0.0.1:8767` (porta diferente da de `npm run serve`), copia dados **sintéticos** de `tests/e2e/data/` para `web/data/` e remove só o que copiou ao terminar. Se `web/data/` já tiver esses arquivos, ele aborta para não sobrescrevê-los.
 - `window.geoworldMap` (usado pelo e2e) só é exposto quando o host é `127.0.0.1` ou `localhost`.
-- `web/tests/static-server.test.js` testa o servidor estático (200, 206, 416, HEAD, bloqueio de `..` e leitura por duas faixas no estilo PMTiles).
+- `web/tests/static-server.test.js` testa o servidor estático (200, 206, 416, HEAD, bloqueio de `..`, leitura por duas faixas no estilo PMTiles e uma faixa num arquivo de ~20 MB; o servidor lê só a faixa pedida, em streaming).
 - O teste de estilo (`web/tests/style-validate.test.js`) valida as camadas de `buildLayers()` com `@maplibre/maplibre-gl-style-spec`, com controles negativos que provam que o validador rejeita estilos inválidos.
 - Não existem PMTiles nos testes (não há tippecanoe aqui): o e2e verifica justamente que a ausência deles mostra o aviso no painel sem quebrar o resto.
 
@@ -97,7 +111,8 @@ npm run test:e2e                               # = playwright test (teste de fum
 
 ## Limitações conhecidas
 
-- **Sem tippecanoe**: `geo_units.pmtiles` e `samples.pmtiles` não foram gerados. Instale o tippecanoe via WSL ou Docker para produzi-los.
+- **Sem tippecanoe**: `geo_units.pmtiles` e `samples.pmtiles` não foram gerados. Instale o tippecanoe via WSL ou Docker para produzi-los (veja "tippecanoe no Windows (WSL)").
+- **Busca por unidades geológicas**: a busca só encontra vulcões, hotspots, zonas tectônicas e coordenadas; unidades geológicas não são pesquisáveis.
 - **Mapas de fundo**: só o "Fundo liso" está habilitado, até que se escolham provedores de tiles (cujos termos precisam ser confirmados). Os demais ficam ocultos.
 - **GitHub Pages**: limite de 100 MB por arquivo; a exportação avisa quando um arquivo passa de 95 MB.
 - **Aviso do maplibre-gl** sobre `Popup.setHTML`: não usamos popups; os detalhes são montados com escape de HTML em `web/js/inspector.js`.
