@@ -19,7 +19,8 @@ sys.path.insert(0, str(ROOT))
 
 from pipeline.common.manifest import record_download  # noqa: E402
 from pipeline.realsources import (  # noqa: E402
-    GEOROC_DIR, GEOROC_FILES, GLIM_FILE, GVP_FILE, PB2002_FILE, USGS_FILE, USGS_URL,
+    GEOROC_DIR, GEOROC_FILES, GLIM_FILE, GVP_FILE, PB2002_FILE, PB2002_PLATES_FILE,
+    PB2002_PLATES_URL, USGS_FILE, USGS_URL,
     georoc_source_id,
 )
 
@@ -35,6 +36,8 @@ FIXED = [
     ("gvp", GVP_URL, GVP_FILE,
      "Termos de uso próprios do GVP (ver volcano.si.edu); citação obrigatória"),
     ("pb2002", PB2002_URL, PB2002_FILE, "Open Data Commons Attribution License 1.0"),
+    ("pb2002-plates", PB2002_PLATES_URL, PB2002_PLATES_FILE,
+     "Open Data Commons Attribution License 1.0"),
     ("usgs", USGS_URL, USGS_FILE, "USGS: domínio público (verificar termos)"),
     ("glim", GLIM_URL, GLIM_FILE, "NÃO declarada na fonte — uso local; não publicar"),
 ]

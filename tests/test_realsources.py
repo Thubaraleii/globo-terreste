@@ -112,7 +112,7 @@ def test_load_tectonics_ranks_dissolved_pairs_with_mw_only(tmp_path):
     out = rs.load_tectonics(csv)
     assert list(out.columns) == SCHEMAS["tectonic_zones"]
     assert out.crs == CRS
-    assert list(out["name"]) == ["PA-NA", "AF-AN"]   # 10^(1.5*8) + 10^(1.5*7) > 10^(1.5*7.5)
+    assert list(out["name"]) == ["PA – NA (PA-NA)", "AF – AN (AF-AN)"]   # sem plates.json: codigos brutos; 10^(1.5*8) + 10^(1.5*7) > 10^(1.5*7.5)
     assert list(out["rank"]) == [1, 2]
     assert out["period_start"].iloc[0] == "2000-01-01T00:00:00.000Z"   # sismos ms/mb nao entram
     assert out.attrs["quakes_used"] == 3
@@ -122,6 +122,43 @@ def test_load_tectonics_ranks_dissolved_pairs_with_mw_only(tmp_path):
     assert out.attrs["buffer_km"] == rs.ZONE_BUFFER_KM == 250
     assert out.attrs["quakes_assigned"] + out.attrs["quakes_unassigned"] == 3
     assert 0 < out.attrs["moment_assigned_pct"] <= 100
+
+
+def _plates(path: Path, rows) -> Path:
+    fc = {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": None,
+         "properties": {"LAYER": "plate", "Code": c, "PlateName": n}} for c, n in rows]}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(fc), encoding="utf-8")
+    return path
+
+
+def test_zone_label_uses_plate_names_and_raw_code_fallbacks():
+    plates = {"PA": "Pacific", "OK": "Okhotsk"}
+    assert rs.zone_label("PA\\OK", "PA", "OK", plates) == "Pacific – Okhotsk (PA\\OK)"
+    # codigo sem nome conhecido: aparece o codigo bruto, nunca um nome inventado
+    assert rs.zone_label("PA-ZZ", "PA", "ZZ", plates) == "Pacific – ZZ (PA-ZZ)"
+    assert rs.zone_label("PA-NA", None, "NA", plates) == "PA-NA"
+    assert rs.zone_label("PA-NA", "PA", "NA", {}) == "PA – NA (PA-NA)"
+
+
+def test_read_plate_names_skips_missing_and_conflicting_codes(tmp_path):
+    f = _plates(tmp_path / "plates.json", [
+        ("PA", "Pacific"), ("BR", "Burma"), ("BR", "Outra"), ("XX", ""), ("", "Sem codigo")])
+    assert rs.read_plate_names(f) == {"PA": "Pacific"}
+    assert rs.read_plate_names(tmp_path / "nao_existe.json") == {}
+
+
+def test_load_tectonics_names_zones_with_plate_names(tmp_path):
+    raw = tmp_path / "raw"
+    _boundaries(raw / "pb2002" / "boundaries.json")
+    _plates(raw / "pb2002" / "plates.json", [("PA", "Pacific"), ("NA", "North America")])
+    csv = _catalog(raw / "usgs" / "cat.csv", [
+        ["2000-01-01T00:00:00.000Z", 0.1, -145, 10, 8.0, "mww"],
+        ["2002-01-01T00:00:00.000Z", -50.1, 15, 10, 7.5, "Mw"],
+    ])
+    out = rs.load_tectonics(csv)
+    assert list(out["name"]) == ["Pacific – North America (PA-NA)", "AF – AN (AF-AN)"]
 
 
 # --- GLiM -------------------------------------------------------------------

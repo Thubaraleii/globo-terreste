@@ -49,6 +49,9 @@ MAPPING_V2 = ROOT / "data" / "curated" / "rock_mapping_v2.csv"
 GVP_FILE = "gvp/holocene_volcanoes.geojson"
 USGS_FILE = "usgs/m6_1900_2026-11-03.csv"
 PB2002_FILE = "pb2002/boundaries.json"
+PB2002_PLATES_FILE = "pb2002/plates.json"
+PB2002_PLATES_URL = ("https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/"
+                     "PB2002_plates.json")
 GLIM_FILE = "glim/LiMW_GIS_2015.gdb.zip"
 GLIM_GDB = "LiMW_GIS 2015.gdb"   # pasta dentro do zip
 GLIM_LAYER = "GLiM_export"
@@ -114,14 +117,49 @@ def read_boundaries(path: Path) -> gpd.GeoDataFrame:
 
 
 def dissolve_boundaries(segments: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    """Uma (Multi)LineString por `Name` (codigo do par de placas, ex. 'PA-NA')."""
+    """Uma (Multi)LineString por `Name` (codigo do par de placas, ex. 'PA-NA').
+    `plate_a`/`plate_b` = PlateA/PlateB do primeiro segmento (None se ausentes)."""
     rows = []
     for name, group in segments.groupby("Name", sort=True):
         parts = [p for g in group.geometry if g is not None and not g.is_empty
                  for p in shapely.get_parts(g)]
         merged = shapely.line_merge(shapely.MultiLineString(parts))
-        rows.append({"name": name, "geometry": merged})
-    return gpd.GeoDataFrame(rows, columns=["name", "geometry"], geometry="geometry", crs=CRS)
+        row = {"name": name, "geometry": merged}
+        for col, key in (("plate_a", "PlateA"), ("plate_b", "PlateB")):
+            vals = group[key].dropna() if key in group.columns else []
+            row[col] = vals.iloc[0] if len(vals) else None
+        rows.append(row)
+    return gpd.GeoDataFrame(rows, columns=["name", "plate_a", "plate_b", "geometry"],
+                            geometry="geometry", crs=CRS)
+
+
+def read_plate_names(path: Path) -> dict[str, str]:
+    """Codigo da placa -> nome (plates.json do PB2002). Codigo ausente, vazio ou
+    com nomes conflitantes fica de fora (o rotulo cai no codigo bruto)."""
+    path = Path(path)
+    if not path.exists():
+        return {}
+    fc = json.loads(path.read_text(encoding="utf-8"))
+    seen: dict[str, set] = {}
+    for f in fc["features"]:
+        props = f.get("properties") or {}
+        code, name = props.get("Code"), props.get("PlateName")
+        if isinstance(code, str) and code.strip() and isinstance(name, str) and name.strip():
+            seen.setdefault(code.strip(), set()).add(name.strip())
+    return {c: next(iter(n)) for c, n in seen.items() if len(n) == 1}
+
+
+def zone_label(name: str, plate_a, plate_b, plates: dict[str, str]) -> str:
+    """'Pacific – Okhotsk (PA\\OK)': nomes das duas placas + o codigo `Name` do PB2002.
+    Placa sem nome conhecido entra com o codigo bruto; sem codigo, so o `Name`."""
+    def part(code):
+        if not isinstance(code, str) or not code.strip():
+            return None
+        return plates.get(code.strip(), code.strip())
+    a, b = part(plate_a), part(plate_b)
+    if a is None or b is None:
+        return name
+    return f"{a} – {b} ({name})"
 
 
 def load_tectonics(path: Path) -> gpd.GeoDataFrame:
@@ -129,6 +167,10 @@ def load_tectonics(path: Path) -> gpd.GeoDataFrame:
     path = Path(path)
     segments = read_boundaries(path.parent.parent / PB2002_FILE)
     pairs = dissolve_boundaries(segments)
+    plates = read_plate_names(path.parent.parent / PB2002_PLATES_FILE)
+    pairs["name"] = [zone_label(n, a, b, plates)
+                     for n, a, b in zip(pairs["name"], pairs["plate_a"], pairs["plate_b"])]
+    pairs = pairs[["name", "geometry"]]
     cat = pd.read_csv(path, dtype=str, keep_default_na=False,
                       usecols=["time", "latitude", "longitude", "mag", "magType"])
     mw, excluded = filter_moment_magnitudes(cat)
@@ -316,7 +358,7 @@ TECTONICS_META = {
     "license": "USGS: domínio público (verificar termos); PB2002: Open Data Commons Attribution 1.0",
     "attribution": "Bird, P. (2003) An updated digital model of plate boundaries, G-cubed 4(3), "
                    "1027, doi:10.1029/2001GC000252; U.S. Geological Survey, Earthquake Catalog. "
-                   f"PB2002 em GeoJSON: {PB2002_REPO}",
+                   f"PB2002 em GeoJSON (limites e nomes das placas, boundaries.json e plates.json): {PB2002_REPO}",
     "acquisition_date": ACQUISITION_DATE,
     "original_scale": None,
 }
