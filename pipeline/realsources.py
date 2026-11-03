@@ -363,6 +363,8 @@ TECTONICS_META = {
     "acquisition_date": ACQUISITION_DATE,
     "original_scale": None,
 }
+# source_url: pagina oficial do GLiM, verificada (acessada) em 2026-11-03: lista o link do
+# Dropbox, ~1,2 milhao de poligonos e ~1:3.750.000; nenhum texto de licenca.
 GLIM_META = {
     "institution": "Universität Hamburg (Hartmann & Moosdorf)",
     "source_url": "https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glim.html",
