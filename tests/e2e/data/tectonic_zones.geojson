@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "LineString", "coordinates": [[0, 0], [20, 5], [40, 0]] },
+      "properties": {
+        "name": "Zona Sintética Um", "rank": 1, "moment_total": "1.230e+21", "moment_log10": 21.0899,
+        "period_start": 1990, "period_end": 2020, "source_id": "sintetico-vulcoes"
+      }
+    }
+  ]
+}

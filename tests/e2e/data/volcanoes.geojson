@@ -1,0 +1,23 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [10, 10] },
+      "properties": {
+        "name": "Vulcão Sintético Alfa", "kind": "volcano", "type": "Estratovulcão sintético",
+        "last_eruption": "1900", "country": "Paísfictício", "reference": "dado sintético de teste",
+        "source_id": "sintetico-vulcoes"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-60, -20] },
+      "properties": {
+        "name": "<img src=x onerror=window.__xss=1>", "kind": "volcano", "type": "sintético",
+        "last_eruption": null, "country": "Paísfictício", "reference": "dado sintético de teste",
+        "source_id": "sintetico-vulcoes"
+      }
+    }
+  ]
+}
