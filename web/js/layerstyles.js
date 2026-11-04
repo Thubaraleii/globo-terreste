@@ -73,7 +73,7 @@ export function buildLayers(sampleFilter = null) {
       paint: {
         // cor do proprio tile; texto que nao for cor valida cai no neutro
         'fill-color': ['to-color', get('color'), NEUTRAL],
-        'fill-opacity': 0.5,
+        'fill-opacity': 0.4,
       },
     },
     {

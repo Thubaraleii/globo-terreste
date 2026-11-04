@@ -95,6 +95,7 @@ html, body {
 .layer-warning { margin: 4px 0 0; font-size: 12px; color: var(--accent); }
 .layer-warning:empty { display: none; }
 
+.legend-note { margin: 4px 0 0; font-size: 0.85em; line-height: 1.35; }
 .legend-list { list-style: none; margin: 4px 0 0; padding: 0; }
 .legend-list li { display: flex; align-items: center; gap: 6px; min-height: 18px; }
 .legend-swatch { flex: none; width: 12px; height: 12px; background: var(--swatch); border: 1px solid var(--border); }

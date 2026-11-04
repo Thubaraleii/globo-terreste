@@ -74,6 +74,17 @@ data/out/sources.json -> web/data/
 
 Arquivos esperados pelo globo: `volcanoes.geojson`, `tectonic_zones.geojson`, `sources.json`, `geo_units.pmtiles`, `samples.pmtiles`. Se algum faltar, a camada correspondente mostra um aviso no painel e o resto do globo continua funcionando. `web/data/` é ignorado pelo git; decida a forma de publicação (veja os limites abaixo) antes de versionar dados.
 
+## Camada de geologia pública (Macrostrat)
+
+A camada **Geologia (Macrostrat)** (`macrostrat`, desligada por padrão) é a alternativa **pública** ao GLiM. Usa os tiles vetoriais `carto` do [Macrostrat](https://macrostrat.org) (`https://tiles.macrostrat.org/carto/{z}/{x}/{y}.mvt`), que o site declara livres sob **CC BY 4.0**: é preciso **citar o Macrostrat e os provedores originais dos mapas** (a referência de cada `source_id`). A atribuição aparece no controle do mapa e, ao clicar numa unidade, o painel traz o crédito, o link para macrostrat.org e os dados do mapa original (nome, título, autores, publicação, ano, endereço).
+
+- **Privacidade**: os tiles vêm direto de `tiles.macrostrat.org` para o navegador do visitante (como os mapas-base), sem passar pelo nosso servidor; o servidor deles vê o IP e o navegador de quem liga a camada. Nada é pedido enquanto a camada estiver desligada.
+- **Cobertura e escala** (observadas em 2026-11-03): o servidor mistura mapas de várias escalas conforme o zoom (no zoom 2 a fonte é a "Generalized Geology of the World" (Geological Survey of Canada); ao aproximar entram mapas mais detalhados, como os do Serviço Geológico do Brasil). Os oceanos não têm polígonos (aparece o mapa-base) e a Antártida tem uma unidade única. Os tiles de baixo zoom são pesados (~170–240 kB cada). A fonte usa `maxzoom` 12; acima disso o MapLibre amplia o tile.
+- **Propriedades lidas** (camada `units`; o contrato do lado web está em `web/js/contract.json`, entrada externa `macrostrat`, fora do pipeline): `color` (cor da unidade, validada: texto que não for cor vira cinza), `name`, `lith`, `age`, `t_int`, `b_int`, `best_age_top`, `best_age_bottom`, `descrip`, `comments`, `map_id`, `source_id`, `ref_name`, `ref_title`, `ref_authors`, `ref_source`, `ref_year`, `ref_url`. `descrip` e `comments` são quase sempre vazios; `lith_class1`, `lith_type*` e `lith_class2/3` existem mas não são usados. A camada `lines` (falhas) é desenhada fina, sem clique.
+- Prioridade do clique: amostras > vulcões > zonas tectônicas > unidades GLiM > Macrostrat.
+
+**GLiM**: a camada **Unidades GLiM (uso local)** (`geo_units`) só é usada localmente, porque o GLiM não declara licença; **não publique** `geo_units.pmtiles`. Sem o arquivo o globo funciona e o painel mostra o aviso de camada indisponível. Pedir permissão aos autores do GLiM continua sendo uma opção para publicá-lo.
+
 ## Rodar o globo localmente
 
 ```
