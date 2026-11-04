@@ -2,6 +2,16 @@
 // as camadas geo_units e samples devem mostrar o aviso sem derrubar o resto.
 import { test, expect } from '@playwright/test';
 
+// 1x1 PNG transparente: os testes nunca falam com os servicos de mapa-base de terceiros.
+const PNG_1X1 = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  'base64',
+);
+test.beforeEach(async ({ page }) => {
+  await page.route(/^https:\/\/server\.arcgisonline\.com\//, (route) =>
+    route.fulfill({ status: 200, contentType: 'image/png', body: PNG_1X1 }));
+});
+
 const PMTILES_RE = /(geo_units|samples)\.pmtiles/;
 const FAVICON_RE = /\/favicon\.ico$/; // ruido do navegador, nao do app
 

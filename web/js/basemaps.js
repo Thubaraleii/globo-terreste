@@ -1,17 +1,41 @@
-// Mapas-base. Estrutura de cada entrada: { id, label, tiles, attribution }.
+// Mapas-base. Estrutura de cada entrada: { id, label, tiles, attribution, maxzoom? }.
 //
-// Somente "Fundo liso" (cor escura, sem tiles externos; campo `color`) esta habilitado.
-// Para habilitar outro fundo, preencha `tiles` com a lista de URLs de tiles raster do
-// provedor ESCOLHIDO (ex.: ['https://.../{z}/{x}/{y}.png']) e `attribution` com o texto
-// exigido pelos termos de uso do provedor, que precisam ser confirmados antes.
-// Entradas com `tiles: null` (e sem `color`) nao aparecem na interface.
-// A atribuicao do fundo ativo e sempre exibida no mapa.
+// Escolhidos pelo usuario em 2026-11-03: Escuro, Satelite e Relevo, os tres da Esri
+// (os tiles publicos do CARTO "dark_all" passaram a exigir chave de API: testado, devolvem
+// uma marca d'agua "API KEY REQUIRED" sobre o mapa).
+// Sao servicos de terceiros: o navegador de quem abre o globo pede os tiles direto a
+// eles (o IP e a regiao vista ficam visiveis para o provedor) e os termos de cada um
+// valem para o seu uso — ver README ("Mapas de fundo"). A atribuicao do fundo ativo e
+// sempre exibida no mapa; os textos abaixo sao constantes do codigo (nunca dados).
+// "Fundo liso" (cor, sem requisicoes externas) continua disponivel. Entradas com
+// `tiles: null` e sem `color` nao aparecem na interface.
 export const BASEMAPS = [
   { id: 'plain', label: 'Fundo liso', tiles: null, attribution: '', color: '#1b2a44' },
-  { id: 'dark', label: 'Escuro', tiles: null, attribution: '' },
-  { id: 'relief', label: 'Relevo', tiles: null, attribution: '' },
-  { id: 'satellite', label: 'Satélite', tiles: null, attribution: '' },
+  {
+    id: 'dark',
+    label: 'Escuro',
+    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'],
+    attribution: 'Mapa escuro © Esri, HERE, Garmin, © OpenStreetMap contributors e a comunidade de usuários do GIS',
+    maxzoom: 16,
+  },
+  {
+    id: 'relief',
+    label: 'Relevo',
+    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}'],
+    attribution: 'Relevo © Esri, USGS, NOAA',
+    maxzoom: 13,
+  },
+  {
+    id: 'satellite',
+    label: 'Satélite',
+    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+    attribution: 'Imagens © Esri, Maxar, Earthstar Geographics e a comunidade de usuários do GIS',
+    maxzoom: 19,
+  },
 ];
+
+// Fundo inicial ao abrir o globo.
+export const DEFAULT_BASEMAP_ID = 'dark';
 
 const hasTiles = (b) => Array.isArray(b.tiles) && b.tiles.length > 0;
 
@@ -44,6 +68,7 @@ export function applyBasemap(map, basemap) {
       tiles: basemap.tiles,
       tileSize: 256,
       attribution: basemap.attribution,
+      ...(basemap.maxzoom ? { maxzoom: basemap.maxzoom } : {}),
     });
     // logo acima do fundo liso e abaixo de qualquer camada de dados
     const layers = map.getStyle().layers;

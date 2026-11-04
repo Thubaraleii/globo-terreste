@@ -5,7 +5,7 @@
 // falha se ainda nao existirem. Cada item tem um espaco para legenda:
 // `[data-legend-for="X"]`.
 import { LAYER_DEFS, LAYER_IDS, moveItem, raiseAbove } from './layer-defs.js';
-import { BASEMAPS, availableBasemaps, applyBasemap } from './basemaps.js';
+import { BASEMAPS, DEFAULT_BASEMAP_ID, availableBasemaps, applyBasemap } from './basemaps.js';
 import { LITH_COLORS, ROCK_CLASS_COLORS } from './layerstyles.js';
 import { sourceOptions } from './inspector.js';
 
@@ -360,6 +360,14 @@ export function mountLayerPanel(map, state, onChange) {
     sel.addEventListener('change', () => {
       applyBasemap(map, BASEMAPS.find((b) => b.id === sel.value));
     });
+    // fundo inicial (escolhido pelo usuario): aplica assim que o estilo existir
+    const initial = choices.find((b) => b.id === DEFAULT_BASEMAP_ID);
+    if (initial && initial.id !== sel.value) {
+      sel.value = initial.id;
+      const apply = () => applyBasemap(map, initial);
+      if (map.getStyle()) apply();
+      else map.once('style.load', apply);
+    }
   } else if (basemapBox) {
     basemapBox.hidden = true;
   }

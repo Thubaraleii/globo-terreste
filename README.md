@@ -189,7 +189,11 @@ Problemas encontrados no primeiro build e situação:
 
 - **PMTiles via GDAL**: sem agregação de densidade em zoom baixo (o mapa de calor usa todos os pontos) e com simplificação/descarte de polígonos pequenos em baixo zoom; tippecanoe é recomendado (veja "PMTiles sem tippecanoe" e "tippecanoe no Windows (WSL)").
 - **Busca por unidades geológicas**: a busca só encontra vulcões, hotspots, zonas tectônicas e coordenadas; unidades geológicas não são pesquisáveis.
-- **Mapas de fundo**: só o "Fundo liso" está habilitado, até que se escolham provedores de tiles (cujos termos precisam ser confirmados). Os demais ficam ocultos.
+- **Mapas de fundo** (escolhidos pelo usuário em 2026-11-03; `web/js/basemaps.js`): **Escuro** (Esri Canvas World Dark Gray Base, zoom até 16), **Relevo** (Esri World Shaded Relief, até 13) e **Satélite** (Esri World Imagery, até 19), além do "Fundo liso" (sem requisições externas). O Escuro é o padrão ao abrir. Pontos de atenção, todos de **terceiros**:
+  - **Privacidade:** o navegador de quem abre o globo pede os tiles direto a `server.arcgisonline.com`, que vê o IP e a região visualizada. Para evitar isso, escolha "Fundo liso".
+  - **Termos de uso:** valem os da Esri para cada serviço (uso gratuito com atribuição, pensado para fins não comerciais; confirme antes de publicar ou de qualquer uso comercial). A atribuição do fundo ativo aparece sempre no rodapé do mapa.
+  - **CARTO `dark_all` não serve:** testado em 2026-11-03, os tiles públicos sem chave de API vêm com a marca d'água "API KEY REQUIRED"; por isso o escuro é o da Esri.
+  - Verificado no navegador (Edge/painel do app) com os três fundos e dados reais. O e2e **bloqueia** essas requisições externas e devolve um PNG vazio, então os testes automáticos não dependem desses serviços.
 - **GitHub Pages**: limite de 100 MB por arquivo; a exportação avisa quando um arquivo passa de 95 MB.
 - **Aviso do maplibre-gl** sobre `Popup.setHTML`: não usamos popups; os detalhes são montados com escape de HTML em `web/js/inspector.js`.
 - **Latitude e longitude trocadas**, quando ambas ficam dentro do intervalo válido, não podem ser detectadas.
