@@ -72,7 +72,16 @@ data/out/*.pmtiles   ->  web/data/
 data/out/sources.json -> web/data/
 ```
 
-Arquivos esperados pelo globo: `volcanoes.geojson`, `tectonic_zones.geojson`, `sources.json`, `geo_units.pmtiles`, `samples.pmtiles`. Se algum faltar, a camada correspondente mostra um aviso no painel e o resto do globo continua funcionando. `web/data/` é ignorado pelo git; decida a forma de publicação (veja os limites abaixo) antes de versionar dados.
+Arquivos esperados pelo globo: `volcanoes.geojson`, `tectonic_zones.geojson`, `plate_boundaries.geojson`, `plate_labels.geojson`, `sources.json`, `geo_units.pmtiles`, `samples.pmtiles`. Se algum faltar, a camada correspondente mostra um aviso no painel e o resto do globo continua funcionando. `web/data/` é ignorado pelo git; decida a forma de publicação (veja os limites abaixo) antes de versionar dados.
+
+## Camada de placas tectônicas (PB2002)
+
+A camada **Placas tectônicas** (`plates`, **ligada por padrão**) desenha todos os 241 segmentos de limite de placa do PB2002 (Bird, 2003) junto com as zonas do top 30, e escreve o nome de cada placa.
+
+- **Linhas**: `plate_boundaries.geojson`, um segmento por feição, **sem dissolver** (propriedades `name`, `plate_a`, `plate_b`, `plate_a_name`, `plate_b_name`, `type`, `source_id`). Linha fina cinza-clara; segmentos `type = subduction` ficam mais grossos e em cinza quente (expressão `case` do MapLibre). A camada fica **abaixo** de `tectonic_zones`, então o laranja grosso das zonas mais ativas continua por cima. O nome da placa vem de `pb2002/plates.json`; código sem nome conhecido aparece com o código bruto, nunca com nome inventado. Clique em um limite: "Limite entre A e B (código)", tipo (subducção / não classificado) e a fonte.
+- **Nomes**: `plate_labels.geojson`, um ponto por código de placa (`code`, `name`, `source_id`), tirado de `representative_point` do **maior** polígono da placa (placas cortadas no antimeridiano, como a Pacífica, ficam com o rótulo dentro da maior metade). Os nomes são **rótulos DOM** (`maplibregl.Marker` com `textContent`, `pointer-events: none`, `web/js/platelabels.js`), **não** uma camada de texto do estilo: o estilo não tem servidor de glifos e não queremos depender de um serviço externo de fontes. Os rótulos do lado oculto do globo ficam invisíveis (`opacityWhenCovered: 0`), somem acima do zoom 6 e seguem a visibilidade e a opacidade da camada `plates`. Se o carregamento falhar, o aviso da camada aparece e nenhum nome é criado.
+- **Fontes**: dois arquivos brutos, duas fontes no registro: `pb2002` (`boundaries.json`, camada `plate_boundaries`) e `pb2002_plates` (`plates.json`, camada `plate_labels`), cada uma com o hash do seu arquivo no cache. Os nomes das placas nos limites vêm do `plates.json`, que não entra no hash de `pb2002`: se ele mudar, rode com `--force`.
+- **Licença e atribuição**: Open Data Commons Attribution 1.0 (`data/raw/pb2002/LICENSE.md`); citar Bird, P. (2003) An updated digital model of plate boundaries, G-cubed 4(3), 1027, doi:10.1029/2001GC000252, e o repositório [fraxen/tectonicplates](https://github.com/fraxen/tectonicplates) que distribui os GeoJSON. Aparece no controle de atribuição do mapa e no painel de detalhes.
 
 ## Camada de geologia pública (Macrostrat)
 
@@ -81,7 +90,7 @@ A camada **Geologia (Macrostrat)** (`macrostrat`, desligada por padrão) é a al
 - **Privacidade**: os tiles vêm direto de `tiles.macrostrat.org` para o navegador do visitante (como os mapas-base), sem passar pelo nosso servidor; o servidor deles vê o IP e o navegador de quem liga a camada. Nada é pedido enquanto a camada estiver desligada.
 - **Cobertura e escala** (observadas em 2026-11-03): o servidor mistura mapas de várias escalas conforme o zoom (no zoom 2 a fonte é a "Generalized Geology of the World" (Geological Survey of Canada); ao aproximar entram mapas mais detalhados, como os do Serviço Geológico do Brasil). Os oceanos não têm polígonos (aparece o mapa-base) e a Antártida tem uma unidade única. Os tiles de baixo zoom são pesados (~170–240 kB cada). A fonte usa `maxzoom` 12; acima disso o MapLibre amplia o tile.
 - **Propriedades lidas** (camada `units`; o contrato do lado web está em `web/js/contract.json`, entrada externa `macrostrat`, fora do pipeline): `color` (cor da unidade, validada: texto que não for cor vira cinza), `name`, `lith`, `age`, `t_int`, `b_int`, `best_age_top`, `best_age_bottom`, `descrip`, `comments`, `map_id`, `source_id`, `ref_name`, `ref_title`, `ref_authors`, `ref_source`, `ref_year`, `ref_url`. `descrip` e `comments` são quase sempre vazios; `lith_class1`, `lith_type*` e `lith_class2/3` existem mas não são usados. A camada `lines` (falhas) é desenhada fina, sem clique.
-- Prioridade do clique: amostras > vulcões > zonas tectônicas > unidades GLiM > Macrostrat.
+- Prioridade do clique (ordem de empilhamento padrão): amostras > vulcões > zonas tectônicas > placas > unidades GLiM > Macrostrat.
 
 **GLiM**: a camada **Unidades GLiM (uso local)** (`geo_units`) só é usada localmente, porque o GLiM não declara licença; **não publique** `geo_units.pmtiles`. Sem o arquivo o globo funciona e o painel mostra o aviso de camada indisponível. Pedir permissão aos autores do GLiM continua sendo uma opção para publicá-lo.
 
