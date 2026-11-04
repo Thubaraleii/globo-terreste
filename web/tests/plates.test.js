@@ -30,6 +30,11 @@ test('plates: fonte GeoJSON e camada de linha abaixo de tectonic_zones', () => {
   const l = layers.find((x) => x.id === 'plates');
   assert.equal(l.type, 'line');
   assert.equal(l.source, 'plates');
+  // halo escuro logo abaixo da linha (legibilidade sobre mapas-base claros)
+  const casing = layers.find((x) => x.id === 'plates:casing');
+  assert.equal(ids.indexOf('plates:casing') + 1, ids.indexOf('plates'));
+  assert.equal(casing.source, 'plates');
+  assert.ok(casing.paint['line-width'][3] > l.paint['line-width'][3]);
 });
 
 test('plates: subducao e destacada por expressao case sobre a propriedade type', () => {

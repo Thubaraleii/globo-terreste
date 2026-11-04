@@ -108,6 +108,18 @@ export function buildLayers(sampleFilter = null) {
       paint: { 'line-color': '#1d2330', 'line-opacity': 0.35, 'line-width': 0.5 },
     },
     {
+      // halo escuro translucido: a linha clara continua legivel sobre o relevo claro
+      id: 'plates:casing',
+      type: 'line',
+      source: 'plates',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': 'rgba(12, 16, 28, 1)',
+        'line-width': ['case', ['==', get('type'), 'subduction'], 3.6, 2.6],
+        'line-opacity': 0.5,
+      },
+    },
+    {
       // abaixo das zonas: o laranja grosso do top 30 continua por cima
       id: 'plates',
       type: 'line',
