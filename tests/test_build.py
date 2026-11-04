@@ -429,7 +429,8 @@ def test_assembly_does_not_reread_the_final_gpkg(tmp_path, monkeypatch):
     rep = build(raw, out, [Src("glim", "units.json", "geo_units", Loader("geo_units")),
                            Src("src_a", "a.json", "samples", Loader("samples"))])
     assert "geoworld.gpkg" not in reads
-    assert rep.counts == {"geo_units": 1, "volcanoes": 0, "tectonic_zones": 0, "samples": 1}
+    assert rep.counts == {"geo_units": 1, "volcanoes": 0, "tectonic_zones": 0, "samples": 1,
+                          "plate_boundaries": 0, "plate_labels": 0}
     s = read_dataframe(out / "geoworld.gpkg", layer="samples")
     assert list(s["unit_id"]) == ["u1"]
 

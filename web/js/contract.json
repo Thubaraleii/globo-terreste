@@ -40,6 +40,20 @@
     "period_end": "string",
     "source_id": "string"
   },
+  "plate_boundaries": {
+    "name": "string",
+    "plate_a": "string",
+    "plate_b": "string",
+    "plate_a_name": "string",
+    "plate_b_name": "string",
+    "type": "string",
+    "source_id": "string"
+  },
+  "plate_labels": {
+    "code": "string",
+    "name": "string",
+    "source_id": "string"
+  },
   "geo_units": {
     "unit_id": "string",
     "lith_original": "string",

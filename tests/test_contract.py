@@ -13,7 +13,7 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import pytest
-from shapely.geometry import LineString, box
+from shapely.geometry import LineString, Point, box
 
 from pipeline import build as build_mod
 from pipeline.build import Source, build
@@ -29,7 +29,7 @@ _RAW = json.loads((ROOT / "web" / "js" / "contract.json").read_text(encoding="ut
 # camadas externas (tiles de terceiros, ex.: macrostrat) nao saem do pipeline: ficam fora
 EXTERNAL = set(_RAW.get("$external", []))
 CONTRACT = {k: v for k, v in _RAW.items() if k not in EXTERNAL and not k.startswith("$")}
-LAYERS = ("volcanoes", "tectonic_zones", "geo_units", "samples")
+LAYERS = ("volcanoes", "tectonic_zones", "geo_units", "samples", "plate_boundaries", "plate_labels")
 
 
 def _meta(name, scale=None):
@@ -55,6 +55,20 @@ def load_units(path, **_):
     raw = gpd.GeoDataFrame({"xx": [r["xx"] for r in rows]},
                            geometry=[box(*r["bbox"]) for r in rows], crs=CRS)
     return normalize_glim(raw, "glim")
+
+
+def load_plate_segments(path, **_):
+    rows = _read_json(path)
+    return gpd.GeoDataFrame(
+        {k: [r[k] for r in rows] for k in
+         ("name", "plate_a", "plate_b", "plate_a_name", "plate_b_name", "type")},
+        geometry=[LineString(r["line"]) for r in rows], crs=CRS)
+
+
+def load_plate_points(path, **_):
+    rows = _read_json(path)
+    return gpd.GeoDataFrame({"code": [r["code"] for r in rows], "name": [r["name"] for r in rows]},
+                            geometry=[Point(r["xy"]) for r in rows], crs=CRS)
 
 
 def load_zones(path, **_):
@@ -101,6 +115,12 @@ def exported(tmp_path, monkeypatch):
                        {"name": "Zona B", "line": [[50, -1], [50, 1]]}],
         "quakes": [[0.0, 30.1, 9.0, "2000-01-01"], [0.0, 50.1, 7.0, "2010-06-30"]],
     })
+    _write(raw, "seg.json", [
+        {"name": "AA-BB", "plate_a": "AA", "plate_b": "BB", "plate_a_name": "Placa A",
+         "plate_b_name": "Placa B", "type": "subduction", "line": [[0, 0], [1, 1]]},
+        {"name": "BB-CC", "plate_a": "BB", "plate_b": "CC", "plate_a_name": "Placa B",
+         "plate_b_name": "CC", "type": None, "line": [[1, 1], [2, 1]]}])
+    _write(raw, "lab.json", [{"code": "AA", "name": "Placa A", "xy": [0.5, 0.5]}])
     _write(raw, "a.json", [{"sid": "a1", "rock": "basalto", "lat": 1.0, "lon": 1.0},
                            {"sid": "a2", "rock": "basalto", "lat": 40.0, "lon": 40.0}])
     _write(raw, "b.json", [{"sid": "b1", "rock": "basalto", "lat": 1.0, "lon": 1.0}])
@@ -109,6 +129,8 @@ def exported(tmp_path, monkeypatch):
         Source("hotspots", "hotspots.csv", "volcanoes", load_hot, meta=_meta("hotspots")),
         Source("glim", "units.json", "geo_units", load_units, meta=_meta("glim", "1:3.750.000")),
         Source("usgs", "zones.json", "tectonic_zones", load_zones, meta=_meta("usgs")),
+        Source("pb", "seg.json", "plate_boundaries", load_plate_segments, meta=_meta("pb")),
+        Source("pb_plates", "lab.json", "plate_labels", load_plate_points, meta=_meta("pb_plates")),
         Source("src_a", "a.json", "samples", make_sample_loader("src_a", 250.0),
                meta=_meta("src_a")),
         Source("src_b", "b.json", "samples", make_sample_loader("src_b"), meta=_meta("src_b")),
@@ -133,6 +155,8 @@ def exported(tmp_path, monkeypatch):
         "tectonic_zones": _read_json(out / "tectonic_zones.geojson")["features"],
         "geo_units": inputs["geo_units"]["features"],
         "samples": inputs["samples"]["features"],
+        "plate_boundaries": _read_json(out / "plate_boundaries.geojson")["features"],
+        "plate_labels": _read_json(out / "plate_labels.geojson")["features"],
     }
     return {
         "props": {layer: [f["properties"] for f in features[layer]] for layer in LAYERS},
@@ -177,7 +201,7 @@ def test_exported_layer_matches_contract(exported, layer):
 def test_sources_json_matches_contract(exported):
     _check(exported["sources"], CONTRACT["sources"], "sources")
     assert {s["source_id"] for s in exported["sources"]} == {
-        "gvp", "hotspots", "glim", "usgs", "src_a", "src_b"}
+        "gvp", "hotspots", "glim", "usgs", "pb", "pb_plates", "src_a", "src_b"}
 
 
 def test_contract_check_detects_renamed_column():

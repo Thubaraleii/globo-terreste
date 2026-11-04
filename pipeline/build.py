@@ -54,7 +54,8 @@ from pipeline.dedupe import assign_dup_groups
 from pipeline.export import export_web
 from pipeline.join import attach_units
 
-LAYERS = ("geo_units", "volcanoes", "tectonic_zones", "samples")
+LAYERS = ("geo_units", "volcanoes", "tectonic_zones", "samples",
+          "plate_boundaries", "plate_labels")
 META_FIELDS = [c for c in SCHEMAS["sources"] if c != "source_id"]
 
 
@@ -278,7 +279,7 @@ def build(raw_dir: Path, out_dir: Path, sources: list[Source],
              for s in contributing],
             columns=SCHEMAS["sources"],
         ))
-    for layer in ("geo_units", "volcanoes", "tectonic_zones"):
+    for layer in ("geo_units", "volcanoes", "tectonic_zones", "plate_boundaries", "plate_labels"):
         for gdf in frames[layer]:
             write_layer(gpkg, layer, gdf)
     if frames["samples"]:

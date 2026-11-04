@@ -32,6 +32,12 @@ SCHEMAS: dict[str, list[str]] = {
         "rank", "name", "moment_total", "period_start", "period_end",
         "source_id", "geometry",
     ],
+    # PB2002 sem dissolver (um segmento por linha) e um ponto de rotulo por placa
+    "plate_boundaries": [
+        "name", "plate_a", "plate_b", "plate_a_name", "plate_b_name", "type",
+        "source_id", "geometry",
+    ],
+    "plate_labels": ["code", "name", "source_id", "geometry"],
 }
 
 # None = sem geometria; "Unknown" = tipo aberto.
@@ -41,6 +47,8 @@ GEOMETRY_TYPES: dict[str, str | None] = {
     "geo_units": "Unknown",
     "volcanoes": "Point",
     "tectonic_zones": "Unknown",
+    "plate_boundaries": "Unknown",
+    "plate_labels": "Point",
 }
 
 _NUMERIC = {
@@ -59,7 +67,7 @@ def _empty_frame(name: str):
 
 
 def create_geopackage(path: Path) -> None:
-    """Cria (sobrescrevendo) o GeoPackage com as cinco camadas vazias."""
+    """Cria (sobrescrevendo) o GeoPackage com todas as camadas vazias."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():

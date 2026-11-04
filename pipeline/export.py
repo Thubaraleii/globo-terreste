@@ -1,7 +1,7 @@
 """Exportacao do GeoPackage para a web (globo estatico).
 
-- `volcanoes` e `tectonic_zones` (camadas pequenas) viram GeoJSON
-  (`volcanoes.geojson`, `tectonic_zones.geojson`); nulo continua `null`.
+- `volcanoes`, `tectonic_zones`, `plate_boundaries` e `plate_labels` (camadas
+  pequenas) viram GeoJSON (`<camada>.geojson`); nulo continua `null`.
   Em `tectonic_zones.geojson`, `moment_total` vira texto ("3.981e+19") e
   ganha `moment_log10` (ver `_moment_props`).
 - A tabela `sources` vira `sources.json` (array JSON, uma linha por fonte).
@@ -31,7 +31,7 @@ from shapely.geometry import mapping
 
 from pipeline.common.model import _NUMERIC, SCHEMAS
 
-GEOJSON_LAYERS = ("volcanoes", "tectonic_zones")
+GEOJSON_LAYERS = ("volcanoes", "tectonic_zones", "plate_boundaries", "plate_labels")
 PMTILES_LAYERS = ("geo_units", "samples")
 MAX_BYTES = 95 * 1024 * 1024
 MIN_TIPPECANOE = (2, 17, 0)

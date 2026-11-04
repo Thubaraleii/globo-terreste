@@ -189,6 +189,63 @@ def load_tectonics(path: Path) -> gpd.GeoDataFrame:
     return zones
 
 
+# --- placas (PB2002) ----------------------------------------------------------
+
+def _clean_code(v):
+    return v.strip() if isinstance(v, str) and v.strip() else None
+
+
+def load_plate_boundaries(path: Path) -> gpd.GeoDataFrame:
+    """PB2002 boundaries.json -> camada plate_boundaries: TODOS os segmentos, sem
+    dissolver. Nome da placa = plates.json (ao lado); sem nome conhecido, o codigo bruto.
+    `type`: 'subduction' ou nulo (vazio no arquivo)."""
+    path = Path(path)
+    seg = read_boundaries(path)
+    names = read_plate_names(path.parent / Path(PB2002_PLATES_FILE).name)
+
+    def plate(col):
+        codes = [_clean_code(v) for v in seg[col]] if col in seg.columns else [None] * len(seg)
+        return codes, [names.get(c, c) if c else None for c in codes]
+
+    a, a_name = plate("PlateA")
+    b, b_name = plate("PlateB")
+    kind = [_clean_code(v) for v in seg["Type"]] if "Type" in seg.columns else [None] * len(seg)
+    out = gpd.GeoDataFrame({
+        "name": list(seg["Name"]) if "Name" in seg.columns else [None] * len(seg),
+        "plate_a": a, "plate_b": b, "plate_a_name": a_name, "plate_b_name": b_name,
+        "type": pd.Series(kind, dtype="object"),
+    }, geometry=list(seg.geometry), crs=CRS)
+    out.attrs.update({"segments": len(out)})
+    return out
+
+
+def load_plate_labels(path: Path) -> gpd.GeoDataFrame:
+    """PB2002 plates.json -> camada plate_labels: um ponto por codigo de placa.
+    Codigos com varios poligonos (placas cortadas no antimeridiano, ilhas) usam a maior
+    parte (maior area em graus) e `representative_point` dela, que fica dentro do
+    poligono e longe da borda +-180 da parte menor."""
+    path = Path(path)
+    fc = json.loads(path.read_text(encoding="utf-8"))
+    names = read_plate_names(path)
+    best: dict[str, tuple[float, object]] = {}
+    for f in fc["features"]:
+        code = _clean_code((f.get("properties") or {}).get("Code"))
+        if code is None or not f.get("geometry"):
+            continue
+        for part in shapely.get_parts(shape(f["geometry"])):
+            if part.is_empty:
+                continue
+            if code not in best or part.area > best[code][0]:
+                best[code] = (part.area, part)
+    codes = sorted(best)
+    out = gpd.GeoDataFrame({
+        "code": codes,
+        "name": [names.get(c, c) for c in codes],
+    }, geometry=[best[c][1].representative_point() for c in codes], crs=CRS)
+    out.attrs.update({"plates": len(out)})
+    return out
+
+
 # --- GLiM -------------------------------------------------------------------
 
 def _vsizip(path: Path) -> str:
@@ -363,6 +420,18 @@ TECTONICS_META = {
     "acquisition_date": ACQUISITION_DATE,
     "original_scale": None,
 }
+# Placas (PB2002): dois arquivos brutos = duas fontes (cada uma com o hash do seu arquivo
+# no cache); `pb2002_plates` so contribui os rotulos. Os nomes das placas nos limites vem
+# do plates.json, que nao entra no hash de `pb2002`: se ele mudar, rode com --force.
+PB2002_META = {
+    "institution": "P. Bird (PB2002); dados em GeoJSON de fraxen/tectonicplates",
+    "source_url": PB2002_REPO,
+    "license": "Open Data Commons Attribution 1.0",
+    "attribution": "Bird, P. (2003) An updated digital model of plate boundaries, G-cubed 4(3), "
+                   f"1027, doi:10.1029/2001GC000252; GeoJSON: {PB2002_REPO}",
+    "acquisition_date": ACQUISITION_DATE,
+    "original_scale": None,
+}
 # source_url: pagina oficial do GLiM, verificada (acessada) em 2026-11-03: lista o link do
 # Dropbox, ~1,2 milhao de poligonos e ~1:3.750.000; nenhum texto de licenca.
 GLIM_META = {
@@ -395,6 +464,10 @@ def registry() -> list[Source]:
         Source("gvp", GVP_FILE, "volcanoes", load_gvp, dict(GVP_META)),
         Source("tectonics", USGS_FILE, "tectonic_zones", load_tectonics, dict(TECTONICS_META)),
     ]
+    sources.append(Source("pb2002", PB2002_FILE, "plate_boundaries", load_plate_boundaries,
+                          dict(PB2002_META)))
+    sources.append(Source("pb2002_plates", PB2002_PLATES_FILE, "plate_labels", load_plate_labels,
+                          dict(PB2002_META)))
     for name in GEOROC_FILES:
         sid = georoc_source_id(name)
         sources.append(Source(sid, f"{GEOROC_DIR}/{name}", "samples",
