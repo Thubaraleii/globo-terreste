@@ -45,3 +45,16 @@ test('controle negativo: camada apontando para fonte inexistente e detectada', (
   style.layers.find((l) => l.id === 'volcanoes').source = 'nao_existe';
   assert.ok(validateStyleMin(style).length > 0);
 });
+
+test('camada Macrostrat: guarda de cor aceita cores validas e cai no neutro', async () => {
+  const { expression } = await import('@maplibre/maplibre-gl-style-spec');
+  const fill = buildLayers().find((l) => l.id === 'macrostrat');
+  const spec = { type: 'color', 'property-type': 'data-driven', expression: { parameters: ['zoom', 'feature'] } };
+  const res = expression.createExpression(fill.paint['fill-color'], spec);
+  assert.equal(res.result, 'success', res.result === 'success' ? '' : fmt(res.value));
+  const at = (color) => res.value.evaluate({ zoom: 3 }, { type: 2, properties: { color } });
+  assert.equal(at('#E5AC4D').toString(), 'rgba(229,172,77,1)');
+  for (const bad of ['nao-e-cor', '', null, 42, 'javascript:alert(1)']) {
+    assert.equal(at(bad).toString(), 'rgba(138,143,153,1)', String(bad));
+  }
+});

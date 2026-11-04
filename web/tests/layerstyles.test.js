@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { LAYER_IDS } from '../js/layer-defs.js';
 import {
-  buildSources, buildLayers, LITH_COLORS, ROCK_CLASS_COLORS, legendItems,
+  buildSources, buildLayers, LITH_COLORS, ROCK_CLASS_COLORS, legendItems, legendNote,
+  MACROSTRAT_TILES, MACROSTRAT_ATTRIBUTION, NEUTRAL,
 } from '../js/layerstyles.js';
 
 const BASE = 'http://localhost/data/';
@@ -14,7 +15,7 @@ test('test_layer_ids_follow_convention', () => {
   for (const id of ids) {
     assert.ok(LAYER_IDS.includes(id.split(':')[0]), `prefixo desconhecido: ${id}`);
   }
-  for (const want of ['volcanoes', 'tectonic_zones', 'geo_units', 'geo_units:outline', 'samples:density', 'samples:points']) {
+  for (const want of ['volcanoes', 'tectonic_zones', 'geo_units', 'geo_units:outline', 'macrostrat', 'macrostrat:lines', 'samples:density', 'samples:points']) {
     assert.ok(ids.includes(want), want);
   }
 });
@@ -26,7 +27,8 @@ test('test_every_layer_has_a_source_and_every_logical_layer_a_source', () => {
   assert.equal(sources.volcanoes.type, 'geojson');
   assert.equal(sources.geo_units.url, `pmtiles://${BASE}geo_units.pmtiles`);
   assert.equal(sources.samples.type, 'vector');
-  for (const l of layers.filter((x) => sources[x.source].type === 'vector')) {
+  // camadas do GeoWorld: a source-layer tem o nome da fonte; Macrostrat usa units/lines
+  for (const l of layers.filter((x) => sources[x.source].type === 'vector' && x.source !== 'macrostrat')) {
     assert.equal(l['source-layer'], l.source);
   }
 });
@@ -79,7 +81,7 @@ test('test_legend_items_match_colour_tables', () => {
   for (const [v, c] of ROCK_CLASS_COLORS) {
     assert.ok(samples.some((i) => i.value === v && i.color === c));
   }
-  for (const id of LAYER_IDS) {
+  for (const id of LAYER_IDS.filter((x) => x !== 'macrostrat')) {
     const items = legendItems(id);
     assert.ok(items.length > 0, id);
     for (const it of items) assert.ok(it.label && it.color, `${id}: item incompleto`);
@@ -92,4 +94,40 @@ test('test_samples_layers_accept_filter_and_start_from_given_filter', () => {
     assert.deepEqual(l.filter, ['==', ['get', 'coord_source'], 'reported']);
   }
   for (const l of layers.filter((x) => x.id.startsWith('samples:'))) assert.equal(l.filter, undefined);
+});
+
+test('test_macrostrat_source_is_remote_vector_with_constant_attribution', () => {
+  const src = buildSources(BASE).macrostrat;
+  assert.equal(src.type, 'vector');
+  assert.deepEqual(src.tiles, ['https://tiles.macrostrat.org/carto/{z}/{x}/{y}.mvt']);
+  assert.equal(src.tiles[0], MACROSTRAT_TILES);
+  assert.equal(src.attribution, MACROSTRAT_ATTRIBUTION);
+  assert.match(src.attribution, /href="https:\/\/macrostrat\.org"/);
+  assert.match(src.attribution, /CC BY 4\.0/);
+  assert.ok(src.maxzoom >= 8 && src.maxzoom <= 14);
+});
+
+test('test_macrostrat_layers_sit_below_geo_units_and_read_tile_layers', () => {
+  const ids = layers.map((l) => l.id);
+  assert.ok(ids.indexOf('macrostrat') < ids.indexOf('geo_units'));
+  assert.ok(ids.indexOf('macrostrat:lines') < ids.indexOf('geo_units'));
+  const fill = layers.find((l) => l.id === 'macrostrat');
+  assert.equal(fill.type, 'fill');
+  assert.equal(fill['source-layer'], 'units');
+  assert.equal(layers.find((l) => l.id === 'macrostrat:lines')['source-layer'], 'lines');
+  assert.ok(fill.paint['fill-opacity'] > 0 && fill.paint['fill-opacity'] <= 0.7);
+});
+
+test('test_macrostrat_fill_colour_is_guarded_with_neutral_default', () => {
+  const c = layers.find((l) => l.id === 'macrostrat').paint['fill-color'];
+  assert.equal(c[0], 'to-color');
+  assert.deepEqual(c[1], ['get', 'color']);
+  assert.equal(c.at(-1), NEUTRAL);
+});
+
+test('test_macrostrat_has_legend_note_but_no_fake_class_table', () => {
+  assert.deepEqual(legendItems('macrostrat'), []);
+  assert.match(legendNote('macrostrat'), /Macrostrat/);
+  assert.match(legendNote('macrostrat'), /escala/);
+  assert.equal(legendNote('volcanoes'), null);
 });

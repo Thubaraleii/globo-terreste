@@ -3,7 +3,7 @@ import { createMap, setAppState, setDataAttribution } from './map.js';
 import { mountLayerPanel } from './layers.js';
 import { addDataLayers, applySampleFilter } from './datalayers.js';
 import {
-  renderSample, renderUnit, renderVolcano, renderZone, indexSources, buildAttribution,
+  renderSample, renderUnit, renderMacrostratUnit, renderVolcano, renderZone, indexSources, buildAttribution,
 } from './inspector.js';
 import { parseCoords, searchIndex, buildSearchItems } from './search.js';
 
@@ -132,13 +132,14 @@ function openFeature(layerId, props, point) {
   const p = props ?? {};
   if (layerId === 'samples:points') openSample(p, point);
   else if (layerId === 'geo_units') openUnit(p);
+  else if (layerId === 'macrostrat') openDetails(() => renderMacrostratUnit(p));
   else if (layerId === 'volcanoes') openDetails(() => renderVolcano(p, { source: sourceOf(p) }));
   else if (layerId === 'tectonic_zones') openDetails(() => renderZone(p, { source: sourceOf(p) }));
 }
 
 // ---------------------------------------------------------------------------
 // Clique no mapa: a feicao de cima entre as camadas interativas.
-const CLICK_LAYERS = ['samples:points', 'volcanoes', 'tectonic_zones', 'geo_units'];
+const CLICK_LAYERS = ['samples:points', 'volcanoes', 'tectonic_zones', 'geo_units', 'macrostrat'];
 const HIT_PAD = 4; // px de folga (linhas finas)
 
 function featuresAt(point) {

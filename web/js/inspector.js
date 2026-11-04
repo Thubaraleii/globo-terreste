@@ -175,6 +175,52 @@ export function renderUnit(props, sampleCount, opts = {}) {
   ].join('');
 }
 
+const MACROSTRAT_CREDIT = '<p class="details-note details-credit">Macrostrat (CC BY 4.0) — cite Macrostrat e os provedores originais. '
+  + '<a href="https://macrostrat.org" target="_blank" rel="noopener noreferrer">macrostrat.org</a></p>';
+
+const ma1 = (v) => esc(v.toLocaleString('pt-BR', { maximumFractionDigits: 1 }));
+const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
+
+// Idades (Ma) do mais novo ao mais velho; texto fora do formato aparece escapado.
+function formatAgeRange(top, bottom) {
+  if (isNum(top) && isNum(bottom)) return `${ma1(top)} a ${ma1(bottom)} Ma`;
+  if (missing(top) && missing(bottom)) return NAO_INFORMADO;
+  return `${isNum(top) ? `${ma1(top)} Ma` : show(top)} a ${isNum(bottom) ? `${ma1(bottom)} Ma` : show(bottom)}`;
+}
+
+// Unidade do Macrostrat (tiles `carto`, camada `units`). Dados de terceiros: tudo escapado;
+// o link do mapa original so vira <a> se for http(s). O credito e texto fixo do codigo.
+export function renderMacrostratUnit(props) {
+  const p = props ?? {};
+  const interval = missing(p.t_int) && missing(p.b_int)
+    ? NAO_INFORMADO
+    : (p.t_int === p.b_int ? show(p.t_int) : `${show(p.t_int)} a ${show(p.b_int)}`);
+  return [
+    heading(missing(p.name) ? 'Unidade geológica (Macrostrat)' : `Unidade geológica: ${esc(p.name)}`),
+    list([
+      row('Nome', show(p.name)),
+      row('Litologia', show(p.lith)),
+      row('Idade', show(p.age)),
+      row('Intervalo', interval),
+      row('Idade numérica', formatAgeRange(p.best_age_top, p.best_age_bottom)),
+      row('Descrição', show(p.descrip)),
+      row('Comentários', show(p.comments)),
+      row('Identificador da unidade (map_id)', show(p.map_id)),
+    ]),
+    section('Mapa original', list([
+      row('Fonte (source_id)', show(p.source_id)),
+      row('Nome', show(p.ref_name)),
+      row('Título', show(p.ref_title)),
+      row('Autores', show(p.ref_authors)),
+      row('Publicação', show(p.ref_source)),
+      row('Ano', show(p.ref_year)),
+      row('Endereço', renderSourceLink(p.ref_url)),
+    ])),
+    '<p class="details-warning">A escala do mapa varia com o zoom e com o mapa de origem; os limites são aproximados.</p>',
+    MACROSTRAT_CREDIT,
+  ].join('');
+}
+
 export function renderVolcano(props, opts = {}) {
   const p = props ?? {};
   const kind = KIND_LABELS.get(p.kind) ?? 'Vulcão';

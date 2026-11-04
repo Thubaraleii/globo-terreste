@@ -28,6 +28,10 @@ export const ROCK_CLASS_COLORS = [
   ['ultramafic', '#7a2be0', 'Ultramáfica'],
 ];
 
+// Geologia publica (Macrostrat, CC BY 4.0). Constantes do codigo, nunca vindas de dados.
+export const MACROSTRAT_TILES = 'https://tiles.macrostrat.org/carto/{z}/{x}/{y}.mvt';
+export const MACROSTRAT_ATTRIBUTION = 'Geologia © <a href="https://macrostrat.org">Macrostrat</a> (CC BY 4.0) e os provedores originais dos mapas';
+
 const VOLCANO_COLOR = '#ff5a36';
 const HOTSPOT_COLOR = '#ffd23f';
 
@@ -43,6 +47,14 @@ export function buildSources(base) {
   return {
     volcanoes: { type: 'geojson', data: `${base}volcanoes.geojson` },
     tectonic_zones: { type: 'geojson', data: `${base}tectonic_zones.geojson` },
+    // Macrostrat: tiles remotos (CC BY 4.0), lidos direto pelo navegador do visitante
+    macrostrat: {
+      type: 'vector',
+      tiles: [MACROSTRAT_TILES],
+      minzoom: 0,
+      maxzoom: 12,
+      attribution: MACROSTRAT_ATTRIBUTION,
+    },
     geo_units: { type: 'vector', url: `pmtiles://${base}geo_units.pmtiles` },
     samples: { type: 'vector', url: `pmtiles://${base}samples.pmtiles` },
   };
@@ -53,6 +65,25 @@ export function buildSources(base) {
 export function buildLayers(sampleFilter = null) {
   const sampleOnly = sampleFilter ? { filter: sampleFilter } : {};
   return [
+    {
+      id: 'macrostrat',
+      type: 'fill',
+      source: 'macrostrat',
+      'source-layer': 'units',
+      paint: {
+        // cor do proprio tile; texto que nao for cor valida cai no neutro
+        'fill-color': ['to-color', get('color'), NEUTRAL],
+        'fill-opacity': 0.5,
+      },
+    },
+    {
+      id: 'macrostrat:lines',
+      type: 'line',
+      source: 'macrostrat',
+      'source-layer': 'lines',
+      minzoom: 3,
+      paint: { 'line-color': '#1d2330', 'line-opacity': 0.5, 'line-width': 0.6 },
+    },
     {
       id: 'geo_units',
       type: 'fill',
@@ -130,6 +161,17 @@ export function buildLayers(sampleFilter = null) {
       },
     },
   ];
+}
+
+// Nota explicativa da legenda (texto fixo do codigo) ou null. Macrostrat nao tem tabela
+// de classes: a cor vem de cada unidade.
+export function legendNote(id) {
+  if (id === 'macrostrat') {
+    return 'Cores das unidades conforme o Macrostrat (em geral pela idade). A escala do mapa '
+      + 'muda com o zoom: generalizado no mundo todo, mais detalhado ao aproximar, e com lacunas '
+      + 'onde não há mapa compilado. Clique em uma unidade para ver os detalhes.';
+  }
+  return null;
 }
 
 // Itens de legenda por camada logica: { value, label, color, shape }.

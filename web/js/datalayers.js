@@ -1,6 +1,6 @@
 // Camadas de dados no mapa: fontes, estilos, legendas, filtro das amostras e falhas.
 // Usa os globos `maplibregl` e `pmtiles` (web/vendor).
-import { buildSources, buildLayers, legendItems } from './layerstyles.js';
+import { buildSources, buildLayers, legendItems, legendNote } from './layerstyles.js';
 import { LAYER_IDS } from './layer-defs.js';
 import { buildSampleFilter } from './filters.js';
 
@@ -36,6 +36,13 @@ export function fillLegends(root = document) {
   for (const id of LAYER_IDS) {
     const slot = root.querySelector(`[data-legend-for="${id}"]`);
     if (!slot || slot.childElementCount > 0) continue;
+    const note = legendNote(id);
+    if (note) {
+      const p = document.createElement('p');
+      p.className = 'legend-note';
+      p.textContent = note;
+      slot.append(p);
+    }
     const list = document.createElement('ul');
     list.className = 'legend-list';
     for (const item of legendItems(id)) {

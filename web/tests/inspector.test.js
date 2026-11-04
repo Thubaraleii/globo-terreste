@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   esc, NAO_INFORMADO, renderSample, renderUnit, renderVolcano, renderZone,
-  renderSourceLink, indexSources, buildAttribution, ATTRIBUTION_FALLBACK, sourceOptions,
+  renderSourceLink, renderMacrostratUnit, indexSources, buildAttribution, ATTRIBUTION_FALLBACK, sourceOptions,
 } from '../js/inspector.js';
 
 const HOSTILE = '<img src=x onerror=1>';
@@ -208,4 +208,45 @@ test('test_render_zone_shows_rank_moment_and_period', () => {
   assert.ok(!odd.includes('× 10^'));
   assert.ok(!odd.includes('log10'));
   assertOnlyOwnTags(odd);
+});
+
+test('renderMacrostratUnit mostra os campos, escapa texto hostil e marca nulos', () => {
+  const html = renderMacrostratUnit({
+    name: 'Furnas Formação', lith: 'sandstone', age: 'Early Devonian', t_int: 'Early Devonian',
+    b_int: 'Early Devonian', best_age_top: 409.7333, best_age_bottom: 419.2,
+    descrip: 'Arenito', comments: null, map_id: 2284807, source_id: 43,
+    ref_name: 'Brazil', ref_title: 'State Geological Maps of Brazil', ref_authors: 'Geological Survey of Brazil',
+    ref_source: 'CPRM - Geobank', ref_year: 2016, ref_url: 'http://geosgb.cprm.gov.br',
+  });
+  for (const t of ['Furnas Formação', 'sandstone', 'Early Devonian', 'Arenito', '2284807', 'CPRM - Geobank', '409,7 a 419,2']) {
+    assert.ok(html.includes(t), t);
+  }
+  assert.ok(html.includes(NAO_INFORMADO));
+  assert.ok(html.includes('Macrostrat (CC BY 4.0) — cite Macrostrat e os provedores originais'));
+  assert.ok(html.includes('<a href="https://macrostrat.org" target="_blank" rel="noopener noreferrer">'));
+  assert.ok(html.includes('<a href="http://geosgb.cprm.gov.br/"'));
+  assertOnlyOwnTags(html);
+});
+
+test('renderMacrostratUnit escapa tudo e nao cria link para esquema perigoso', () => {
+  const bad = {
+    name: HOSTILE, lith: HOSTILE, age: HOSTILE, t_int: HOSTILE, b_int: HOSTILE, descrip: HOSTILE,
+    comments: HOSTILE, map_id: HOSTILE, source_id: HOSTILE, ref_name: HOSTILE, ref_title: HOSTILE,
+    ref_authors: HOSTILE, ref_source: HOSTILE, ref_year: HOSTILE, ref_url: 'javascript:alert(1)',
+    best_age_top: HOSTILE, best_age_bottom: HOSTILE,
+  };
+  const html = renderMacrostratUnit(bad);
+  assert.ok(!html.includes(HOSTILE));
+  assert.ok(html.includes('&lt;img src=x onerror=1&gt;'));
+  assert.ok(!/href="javascript/i.test(html));
+  assertOnlyOwnTags(html);
+});
+
+test('renderMacrostratUnit com tudo nulo ou sem propriedades nao quebra', () => {
+  for (const p of [{}, null, undefined, { name: '', lith: '  ', best_age_top: NaN }]) {
+    const html = renderMacrostratUnit(p);
+    assert.ok(html.includes(NAO_INFORMADO));
+    assert.ok(html.includes('https://macrostrat.org'));
+    assertOnlyOwnTags(html);
+  }
 });

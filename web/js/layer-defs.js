@@ -1,6 +1,7 @@
 // Definicao das camadas (puro, sem DOM). Ordem = ordem inicial de empilhamento, de baixo para cima.
 export const LAYER_DEFS = [
-  { id: 'geo_units', label: 'Unidades geológicas' },
+  { id: 'macrostrat', label: 'Geologia (Macrostrat)' },
+  { id: 'geo_units', label: 'Unidades GLiM (uso local)' },
   { id: 'tectonic_zones', label: 'Zonas tectônicas' },
   { id: 'samples', label: 'Amostras' },
   { id: 'volcanoes', label: 'Vulcões' },

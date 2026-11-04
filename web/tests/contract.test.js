@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildLayers } from '../js/layerstyles.js';
 import { buildSampleFilter } from '../js/filters.js';
-import { renderSample, renderUnit, renderVolcano, renderZone } from '../js/inspector.js';
+import { renderSample, renderUnit, renderVolcano, renderZone, renderMacrostratUnit } from '../js/inspector.js';
 
 const CONTRACT = JSON.parse(readFileSync(new URL('../js/contract.json', import.meta.url), 'utf8'));
 const keysOf = (layer) => new Set(Object.keys(CONTRACT[layer]));
@@ -28,9 +28,11 @@ const ALL_FILTERS = {
 
 test('contrato lista as camadas da web', () => {
   assert.deepEqual(
-    Object.keys(CONTRACT).filter((k) => k !== '$comment').sort(),
-    ['geo_units', 'samples', 'sources', 'tectonic_zones', 'volcanoes'],
+    Object.keys(CONTRACT).filter((k) => !k.startsWith('$')).sort(),
+    ['geo_units', 'macrostrat', 'samples', 'sources', 'tectonic_zones', 'volcanoes'],
   );
+  // macrostrat e externo (tiles de terceiros): fora do pipeline e do tests/test_contract.py
+  assert.deepEqual(CONTRACT.$external, ['macrostrat']);
 });
 
 test('propriedades usadas pelos estilos de cada camada estao no contrato da camada', () => {
@@ -75,20 +77,21 @@ test('renderizadores do painel so leem propriedades do contrato', () => {
     ['geo_units', (p, s) => renderUnit(p, p.sample_count, { source: s })],
     ['volcanoes', (p, s) => renderVolcano(p, { source: s })],
     ['tectonic_zones', (p, s) => renderZone(p, { source: s })],
+    ['macrostrat', (p) => renderMacrostratUnit(p)],
   ];
   for (const [layer, render] of cases) {
     const reads = [];
     const sourceReads = [];
     render(probe(layer, reads), probe('sources', sourceReads));
     assertReadsInContract(layer, reads);
-    assertReadsInContract('sources', sourceReads);
+    if (layer !== 'macrostrat') assertReadsInContract('sources', sourceReads);
   }
 });
 
 test('props.<nome> lidos em main.js existem no contrato de alguma camada', () => {
   const src = readFileSync(new URL('../js/main.js', import.meta.url), 'utf8');
   const names = new Set([...src.matchAll(/props\??\.([a-z_][a-z0-9_]*)/g)].map((m) => m[1]));
-  const all = new Set(Object.keys(CONTRACT).filter((k) => k !== '$comment').flatMap((k) => Object.keys(CONTRACT[k])));
+  const all = new Set(Object.keys(CONTRACT).filter((k) => !k.startsWith('$')).flatMap((k) => Object.keys(CONTRACT[k])));
   assert.ok(names.size > 0);
   for (const n of names) assert.ok(all.has(n), `main.js le props.${n}, fora do contrato`);
 });

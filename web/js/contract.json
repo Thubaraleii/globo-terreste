@@ -1,5 +1,27 @@
 {
   "$comment": "Contrato pipeline -> web: propriedades (e tipo JSON) que export_web escreve e a web le, por camada. Nulo e sempre permitido. Testado por tests/test_contract.py e web/tests/contract.test.js.",
+  "$external": ["macrostrat"],
+  "$external_comment": "Camadas de terceiros (tiles remotos, fora do pipeline): so o teste do lado web as verifica; tests/test_contract.py as ignora. macrostrat = tiles `carto` (camada `units`); so propriedades que a web le.",
+  "macrostrat": {
+    "color": "string",
+    "name": "string",
+    "lith": "string",
+    "age": "string",
+    "t_int": "string",
+    "b_int": "string",
+    "best_age_top": "number",
+    "best_age_bottom": "number",
+    "descrip": "string",
+    "comments": "string",
+    "map_id": "integer",
+    "source_id": "integer",
+    "ref_name": "string",
+    "ref_title": "string",
+    "ref_authors": "string",
+    "ref_source": "string",
+    "ref_year": "integer",
+    "ref_url": "string"
+  },
   "volcanoes": {
     "name": "string",
     "kind": "string",

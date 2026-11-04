@@ -25,7 +25,10 @@ from pipeline.samples import normalize_samples
 from pipeline.tectonics import rank_zones
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = json.loads((ROOT / "web" / "js" / "contract.json").read_text(encoding="utf-8"))
+_RAW = json.loads((ROOT / "web" / "js" / "contract.json").read_text(encoding="utf-8"))
+# camadas externas (tiles de terceiros, ex.: macrostrat) nao saem do pipeline: ficam fora
+EXTERNAL = set(_RAW.get("$external", []))
+CONTRACT = {k: v for k, v in _RAW.items() if k not in EXTERNAL and not k.startswith("$")}
 LAYERS = ("volcanoes", "tectonic_zones", "geo_units", "samples")
 
 
@@ -162,7 +165,8 @@ def _check(rows, contract, label):
 
 
 def test_contract_lists_all_web_layers():
-    assert set(CONTRACT) - {"$comment"} == {*LAYERS, "sources"}
+    assert set(CONTRACT) == {*LAYERS, "sources"}
+    assert EXTERNAL == {"macrostrat"} and EXTERNAL.isdisjoint(CONTRACT)
 
 
 @pytest.mark.parametrize("layer", LAYERS)

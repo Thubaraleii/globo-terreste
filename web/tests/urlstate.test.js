@@ -83,3 +83,9 @@ test('test_encode_state_non_finite_numbers_fall_back_to_defaults', () => {
   assert.equal(d.lat, DEFAULT_STATE.lat);
   assert.equal(d.zoom, DEFAULT_STATE.zoom);
 });
+
+test('macrostrat e aceito em layers= e fica desligado por padrao', async () => {
+  const { decodeState, DEFAULT_STATE } = await import('../js/urlstate.js');
+  assert.deepEqual(decodeState('#layers=macrostrat,volcanoes').layers, ['macrostrat', 'volcanoes']);
+  assert.ok(!DEFAULT_STATE.layers.includes('macrostrat'));
+});

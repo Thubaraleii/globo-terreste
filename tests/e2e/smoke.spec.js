@@ -10,6 +10,9 @@ const PNG_1X1 = Buffer.from(
 test.beforeEach(async ({ page }) => {
   await page.route(/^https:\/\/server\.arcgisonline\.com\//, (route) =>
     route.fulfill({ status: 200, contentType: 'image/png', body: PNG_1X1 }));
+  // Macrostrat: tile vetorial vazio (o e2e nunca fala com o servidor real)
+  await page.route(/^https:\/\/tiles\.macrostrat\.org\//, (route) =>
+    route.fulfill({ status: 200, contentType: 'application/x-protobuf', body: Buffer.alloc(0) }));
 });
 
 const PMTILES_RE = /(geo_units|samples)\.pmtiles/;
@@ -113,6 +116,26 @@ test('uma URL com estado salvo restaura camadas, filtros e posicao', async ({ pa
   expect(view.lat).toBeCloseTo(-12.25, 2);
   expect(view.zoom).toBeCloseTo(3.5, 2);
   expect(JSON.stringify(view.filter)).toContain('basalto');
+});
+
+test('a camada Macrostrat comeca desligada e liga/desliga pelo painel', async ({ page }) => {
+  const { pageErrors, consoleErrors } = watch(page);
+  await open(page, '#lng=-50&lat=-10&zoom=4&layers=volcanoes');
+  const toggle = page.locator('[data-layer-id="macrostrat"] .layer-head input[type="checkbox"]');
+  await expect(page.locator('[data-layer-id="macrostrat"]')).toContainText('Geologia (Macrostrat)');
+  await expect(page.locator('[data-layer-id="geo_units"]')).toContainText('Unidades GLiM (uso local)');
+  await expect(toggle).not.toBeChecked();
+  expect(await visibility(page, 'macrostrat')).toBe('none');
+  expect(await visibility(page, 'macrostrat:lines')).toBe('none');
+  await toggle.check();
+  await expect(page.locator('[data-legend-for="macrostrat"]')).toContainText('Macrostrat');
+  expect(await visibility(page, 'macrostrat')).toBe('visible');
+  expect(await visibility(page, 'macrostrat:lines')).toBe('visible');
+  await expect.poll(() => page.evaluate(() => window.location.hash)).toContain('macrostrat');
+  await toggle.uncheck();
+  expect(await visibility(page, 'macrostrat')).toBe('none');
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
 });
 
 test('filtros da URL sao validados; filtro de fonte vem de sources.json; Limpar filtros zera tudo', async ({ page }) => {
