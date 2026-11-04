@@ -6,9 +6,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildLayers } from '../js/layerstyles.js';
 import { buildSampleFilter } from '../js/filters.js';
-import { renderSample, renderUnit, renderVolcano, renderZone, renderMacrostratUnit } from '../js/inspector.js';
+import { renderSample, renderUnit, renderVolcano, renderZone, renderMacrostratUnit, renderPlateBoundary } from '../js/inspector.js';
+import { buildLabelSpecs } from '../js/platelabels.js';
 
 const CONTRACT = JSON.parse(readFileSync(new URL('../js/contract.json', import.meta.url), 'utf8'));
+// fonte MapLibre -> camada do contrato (quando o nome difere)
+const CONTRACT_OF = { plates: 'plate_boundaries' };
 const keysOf = (layer) => new Set(Object.keys(CONTRACT[layer]));
 
 // Todos os nomes em ['get', '<prop>'] de uma expressao (recursivo).
@@ -29,7 +32,7 @@ const ALL_FILTERS = {
 test('contrato lista as camadas da web', () => {
   assert.deepEqual(
     Object.keys(CONTRACT).filter((k) => !k.startsWith('$')).sort(),
-    ['geo_units', 'macrostrat', 'samples', 'sources', 'tectonic_zones', 'volcanoes'],
+    ['geo_units', 'macrostrat', 'plate_boundaries', 'plate_labels', 'samples', 'sources', 'tectonic_zones', 'volcanoes'],
   );
   // macrostrat e externo (tiles de terceiros): fora do pipeline e do tests/test_contract.py
   assert.deepEqual(CONTRACT.$external, ['macrostrat']);
@@ -38,7 +41,7 @@ test('contrato lista as camadas da web', () => {
 test('propriedades usadas pelos estilos de cada camada estao no contrato da camada', () => {
   const layers = buildLayers(buildSampleFilter(ALL_FILTERS));
   for (const layer of layers) {
-    const allowed = keysOf(layer.source);
+    const allowed = keysOf(CONTRACT_OF[layer.source] ?? layer.source);
     const used = getProps({ paint: layer.paint, layout: layer.layout, filter: layer.filter });
     for (const p of used) assert.ok(allowed.has(p), `${layer.id}: '${p}' fora do contrato de ${layer.source}`);
   }
@@ -77,6 +80,7 @@ test('renderizadores do painel so leem propriedades do contrato', () => {
     ['geo_units', (p, s) => renderUnit(p, p.sample_count, { source: s })],
     ['volcanoes', (p, s) => renderVolcano(p, { source: s })],
     ['tectonic_zones', (p, s) => renderZone(p, { source: s })],
+    ['plate_boundaries', (p, s) => renderPlateBoundary(p, { source: s })],
     ['macrostrat', (p) => renderMacrostratUnit(p)],
   ];
   for (const [layer, render] of cases) {
@@ -86,6 +90,16 @@ test('renderizadores do painel so leem propriedades do contrato', () => {
     assertReadsInContract(layer, reads);
     if (layer !== 'macrostrat') assertReadsInContract('sources', sourceReads);
   }
+});
+
+test('rotulos de placa so leem propriedades do contrato de plate_labels', () => {
+  const props = Object.fromEntries(Object.keys(CONTRACT.plate_labels).map((k) => [k, 'x']));
+  const reads = [];
+  const probed = new Proxy(props, { get(o, k, r) { if (typeof k === 'string') reads.push(k); return Reflect.get(o, k, r); } });
+  const specs = buildLabelSpecs({ features: [{ geometry: { type: 'Point', coordinates: [1, 2] }, properties: probed }] });
+  assert.equal(specs.length, 1);
+  assert.ok(reads.length > 0);
+  for (const k of reads) assert.ok(keysOf('plate_labels').has(k), k);
 });
 
 test('props.<nome> lidos em main.js existem no contrato de alguma camada', () => {

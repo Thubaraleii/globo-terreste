@@ -300,3 +300,15 @@ html, body {
     border-bottom: 0;
   }
 }
+
+/* Nomes das placas: rotulos DOM (o estilo nao tem glifos); nunca interceptam cliques. */
+.plate-label {
+  pointer-events: none;
+  white-space: nowrap;
+  font: 600 11px/1 system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 0.7);
+}
+.plate-label.is-off { display: none; }

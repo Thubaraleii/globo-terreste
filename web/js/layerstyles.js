@@ -34,6 +34,10 @@ export const MACROSTRAT_ATTRIBUTION = 'Geologia © <a href="https://macrostrat.o
 
 const VOLCANO_COLOR = '#ff5a36';
 const HOTSPOT_COLOR = '#ffd23f';
+// Limites de placa (PB2002): cinza claro e fino; subducao em cinza quente, um pouco mais grossa.
+const PLATE_COLOR = '#d0d5dd';
+const SUBDUCTION_COLOR = '#e8b08a';
+const ZONE_LEGEND_COLOR = '#fb8500';
 
 const get = (k) => ['get', k];
 const flat = (table) => table.flatMap(([v, c]) => [v, c]);
@@ -47,6 +51,7 @@ export function buildSources(base) {
   return {
     volcanoes: { type: 'geojson', data: `${base}volcanoes.geojson` },
     tectonic_zones: { type: 'geojson', data: `${base}tectonic_zones.geojson` },
+    plates: { type: 'geojson', data: `${base}plate_boundaries.geojson` },
     // Macrostrat: tiles remotos (CC BY 4.0), lidos direto pelo navegador do visitante
     macrostrat: {
       type: 'vector',
@@ -101,6 +106,18 @@ export function buildLayers(sampleFilter = null) {
       'source-layer': 'geo_units',
       minzoom: 3,
       paint: { 'line-color': '#1d2330', 'line-opacity': 0.35, 'line-width': 0.5 },
+    },
+    {
+      // abaixo das zonas: o laranja grosso do top 30 continua por cima
+      id: 'plates',
+      type: 'line',
+      source: 'plates',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': ['case', ['==', get('type'), 'subduction'], SUBDUCTION_COLOR, PLATE_COLOR],
+        'line-width': ['case', ['==', get('type'), 'subduction'], 1.8, 1],
+        'line-opacity': 0.85,
+      },
     },
     {
       id: 'tectonic_zones',
@@ -191,6 +208,12 @@ export function legendItems(id) {
       return [
         { value: 'volcano', label: 'Vulcão', color: VOLCANO_COLOR, shape: 'dot' },
         { value: 'hotspot', label: 'Hotspot', color: HOTSPOT_COLOR, shape: 'ring' },
+      ];
+    case 'plates':
+      return [
+        { value: 'boundary', label: 'Limite de placa', color: PLATE_COLOR, shape: 'line' },
+        { value: 'subduction', label: 'Subducção (linha mais grossa)', color: SUBDUCTION_COLOR, shape: 'line' },
+        { value: 'zones', label: 'Laranja: zonas mais ativas (camada abaixo)', color: ZONE_LEGEND_COLOR, shape: 'line' },
       ];
     case 'tectonic_zones':
       return [

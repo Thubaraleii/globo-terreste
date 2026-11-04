@@ -182,3 +182,64 @@ test('um nome com HTML aparece como texto e nao executa', async ({ page }) => {
   await expect(page.locator('#details-panel img')).toHaveCount(0);
   expect(await page.evaluate(() => window.__xss)).toBeUndefined();
 });
+
+// --- Placas tectonicas ---------------------------------------------------------
+
+const labelStates = (page) => page.evaluate(() =>
+  [...document.querySelectorAll('.plate-label')].map((el) => ({
+    text: el.textContent, off: el.classList.contains('is-off'),
+    pe: getComputedStyle(el).pointerEvents,
+  })));
+
+test('Placas: camada e nomes ligam e desligam juntos pelo painel e somem com o zoom', async ({ page }) => {
+  const { pageErrors, consoleErrors } = watch(page);
+  await open(page);
+  const cb = page.locator('[data-layer-id="plates"] .layer-head input[type="checkbox"]');
+  await expect(page.locator('[data-layer-id="plates"]')).toContainText('Placas tectônicas');
+  await expect(cb).toBeChecked();
+  await expect(page.locator('[data-legend-for="plates"]')).toContainText('zonas mais ativas');
+  expect(await visibility(page, 'plates')).toBe('visible');
+  await expect.poll(async () => (await labelStates(page)).length).toBe(3);
+  const labels = await labelStates(page);
+  expect(labels.every((l) => !l.off && l.pe === 'none')).toBe(true);
+  expect(labels.map((l) => l.text)).toContain('Placa Sintética A');
+  await cb.uncheck();
+  await expect.poll(() => visibility(page, 'plates')).toBe('none');
+  await expect.poll(async () => (await labelStates(page)).every((l) => l.off)).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.location.hash)).not.toContain('plates');
+  await cb.check();
+  await expect.poll(() => visibility(page, 'plates')).toBe('visible');
+  await expect.poll(async () => (await labelStates(page)).every((l) => !l.off)).toBe(true);
+  // zoom alto: os nomes somem, as linhas ficam
+  await page.evaluate(() => window.geoworldMap.jumpTo({ zoom: 7.5 }));
+  await expect.poll(async () => (await labelStates(page)).every((l) => l.off)).toBe(true);
+  expect(await visibility(page, 'plates')).toBe('visible');
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test('Placas: clicar num limite abre os detalhes com os nomes das placas e a fonte', async ({ page }) => {
+  await open(page, '#lng=20&lat=10&zoom=4&layers=plates');
+  await page.waitForFunction(() => {
+    const m = window.geoworldMap;
+    const c = m.getCanvas();
+    return m.queryRenderedFeatures([[c.clientWidth / 2 - 4, c.clientHeight / 2 - 4],
+      [c.clientWidth / 2 + 4, c.clientHeight / 2 + 4]], { layers: ['plates'] }).length > 0;
+  });
+  const box = await page.locator('#map canvas.maplibregl-canvas').boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  const heading = page.locator('#details-panel .details-heading');
+  await expect(heading).toContainText('Limite entre Placa Sintética A e Placa <b>Sintética</b> B (SA-SB)');
+  await expect(page.locator('#details-panel b')).toHaveCount(0);
+  await expect(page.locator('#details-panel')).toContainText('Subducção');
+  await expect(page.locator('#details-panel')).toContainText('LICENÇA-PLACAS');
+});
+
+test('Placas: se plate_labels.geojson falhar, so o aviso aparece e nenhum nome e criado', async ({ page }) => {
+  await page.route(/plate_labels\.geojson/, (route) => route.fulfill({ status: 404, body: 'no' }));
+  const { pageErrors } = watch(page);
+  await page.goto('/index.html');
+  await expect(page.locator('[data-warning-for="plates"]')).toContainText('Camada indisponível');
+  expect(await page.locator('.plate-label').count()).toBe(0);
+  expect(pageErrors).toEqual([]);
+});

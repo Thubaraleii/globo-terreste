@@ -1,0 +1,4 @@
+{"type":"FeatureCollection","features":[
+{"type":"Feature","geometry":{"type":"LineString","coordinates":[[0,0],[20,10],[40,10]]},"properties":{"name":"SA-SB","plate_a":"SA","plate_b":"SB","plate_a_name":"Placa Sintética A","plate_b_name":"Placa <b>Sintética</b> B","type":"subduction","source_id":"pb2002"}},
+{"type":"Feature","geometry":{"type":"LineString","coordinates":[[-40,-10],[-20,0]]},"properties":{"name":"SB-SC","plate_a":"SB","plate_b":"SC","plate_a_name":"Placa Sintética B","plate_b_name":"SC","type":null,"source_id":"pb2002"}}
+]}

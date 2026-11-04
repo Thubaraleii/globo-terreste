@@ -238,6 +238,26 @@ export function renderVolcano(props, opts = {}) {
   ].join('');
 }
 
+const PLATE_TYPE_LABELS = new Map([['subduction', 'Subducção']]);
+
+// Segmento de limite de placa (PB2002): placas pelo nome (ou codigo bruto) e o codigo `name`.
+export function renderPlateBoundary(props, opts = {}) {
+  const p = props ?? {};
+  const a = missing(p.plate_a_name) ? NAO_INFORMADO : esc(p.plate_a_name);
+  const b = missing(p.plate_b_name) ? NAO_INFORMADO : esc(p.plate_b_name);
+  return [
+    heading(`Limite entre ${a} e ${b} (${show(p.name)})`),
+    list([
+      row('Placa A', `${a}${missing(p.plate_a) ? '' : ` (${esc(p.plate_a)})`}`),
+      row('Placa B', `${b}${missing(p.plate_b) ? '' : ` (${esc(p.plate_b)})`}`),
+      row('Código do limite', show(p.name)),
+      row('Tipo', missing(p.type) ? 'não classificado' : showLabel(PLATE_TYPE_LABELS, p.type)),
+    ]),
+    '<p class="details-note">Modelo PB2002: os tipos de limite aqui exibidos são apenas a indicação de subducção do arquivo; os demais segmentos aparecem como não classificados.</p>',
+    sourceSection(p.source_id, opts.source),
+  ].join('');
+}
+
 export function renderZone(props, opts = {}) {
   const p = props ?? {};
   return [

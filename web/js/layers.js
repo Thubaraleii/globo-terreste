@@ -41,7 +41,9 @@ function initialOrder(activeLayers) {
   return order;
 }
 
-export function mountLayerPanel(map, state, onChange) {
+// `hooks.onLayerApply(id, visible, opacity)` (opcional): chamado a cada aplicacao no mapa,
+// para itens que nao sao camadas MapLibre (ex.: rotulos DOM das placas).
+export function mountLayerPanel(map, state, onChange, hooks = {}) {
   const root = document.getElementById('layer-panel');
   const order = initialOrder(state.layers);
   const enabled = new Set(state.layers);
@@ -63,6 +65,7 @@ export function mountLayerPanel(map, state, onChange) {
     if (!map.getStyle()) return;
     applyOrder();
     for (const id of order) {
+      hooks.onLayerApply?.(id, enabled.has(id), touchedOpacity.get(id) ?? 1);
       for (const lid of mapLayerIds(map, id)) {
         const visibility = enabled.has(id) ? 'visible' : 'none';
         if (map.getLayoutProperty(lid, 'visibility') !== visibility) {

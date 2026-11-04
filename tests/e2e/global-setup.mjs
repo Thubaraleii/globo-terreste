@@ -6,7 +6,8 @@ import { join } from 'node:path';
 
 const SRC = fileURLToPath(new URL('./data/', import.meta.url));
 const DEST = fileURLToPath(new URL('../../web/data/', import.meta.url));
-const FILES = ['volcanoes.geojson', 'tectonic_zones.geojson', 'sources.json'];
+const FILES = ['volcanoes.geojson', 'tectonic_zones.geojson', 'plate_boundaries.geojson',
+  'plate_labels.geojson', 'sources.json'];
 
 export default function globalSetup() {
   const madeDir = !existsSync(DEST);

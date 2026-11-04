@@ -8,7 +8,7 @@ export const DEFAULT_STATE = Object.freeze({
   lng: 0,
   lat: 20,
   zoom: 1.5,
-  layers: ['tectonic_zones', 'samples', 'volcanoes'],
+  layers: ['plates', 'tectonic_zones', 'samples', 'volcanoes'],
   filters: Object.freeze({
     classes: [],
     rock: null,

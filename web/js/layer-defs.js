@@ -2,6 +2,7 @@
 export const LAYER_DEFS = [
   { id: 'macrostrat', label: 'Geologia (Macrostrat)' },
   { id: 'geo_units', label: 'Unidades GLiM (uso local)' },
+  { id: 'plates', label: 'Placas tectônicas' },
   { id: 'tectonic_zones', label: 'Zonas tectônicas' },
   { id: 'samples', label: 'Amostras' },
   { id: 'volcanoes', label: 'Vulcões' },

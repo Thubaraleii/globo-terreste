@@ -3,8 +3,9 @@ import { createMap, setAppState, setDataAttribution } from './map.js';
 import { mountLayerPanel } from './layers.js';
 import { addDataLayers, applySampleFilter } from './datalayers.js';
 import {
-  renderSample, renderUnit, renderMacrostratUnit, renderVolcano, renderZone, indexSources, buildAttribution,
+  renderSample, renderUnit, renderMacrostratUnit, renderVolcano, renderZone, renderPlateBoundary, indexSources, buildAttribution,
 } from './inspector.js';
+import { buildLabelSpecs, mountPlateLabels } from './platelabels.js';
 import { parseCoords, searchIndex, buildSearchItems } from './search.js';
 
 // Pasta dos dados (relativa a pagina); sem sobrescrita por URL.
@@ -14,17 +15,35 @@ const WARNING = 'Camada indisponível: não foi possível carregar os dados.';
 const state = decodeState(window.location.hash);
 const map = createMap(document.getElementById('map'), state);
 
+// Rotulos das placas (DOM): seguem a visibilidade e a opacidade da camada `plates`.
+let plateLabels = null;
+const platesView = { layerOn: false, opacity: 1 };
+
 const layerPanel = mountLayerPanel(map, state, (next) => {
   applySampleFilter(map, next.filters);
   setAppState(map, next);
+}, {
+  onLayerApply(id, visible, opacity) {
+    if (id !== 'plates') return;
+    platesView.layerOn = visible;
+    platesView.opacity = opacity;
+    plateLabels?.update(platesView);
+  },
 });
 
-applySampleFilter(map, state.filters);
-addDataLayers(map, DATA_BASE, (layerId, err) => {
+// Falha de uma camada: avisa uma vez por camada; sem os limites das placas, sem os nomes.
+const failedLayers = new Set();
+function layerFailed(layerId, err) {
+  if (failedLayers.has(layerId)) return;
+  failedLayers.add(layerId);
   console.warn(`Falha ao carregar a camada ${layerId}:`, err);
   const slot = document.querySelector(`[data-warning-for="${layerId}"]`);
   if (slot) slot.textContent = WARNING;
-});
+  if (layerId === 'plates') plateLabels?.disable();
+}
+
+applySampleFilter(map, state.filters);
+addDataLayers(map, DATA_BASE, layerFailed);
 
 // Painel recolhivel (em telas estreitas comeca fechado).
 const panel = document.getElementById('layer-panel');
@@ -41,6 +60,17 @@ async function fetchJson(name) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
+
+// Nomes das placas: criados uma vez a partir de plate_labels.geojson.
+fetchJson('plate_labels.geojson')
+  .then((fc) => {
+    const specs = buildLabelSpecs(fc);
+    if (specs.length === 0) throw new Error('plate_labels.geojson sem rótulos válidos');
+    plateLabels = mountPlateLabels(map, specs);
+    if (failedLayers.has('plates')) plateLabels.disable();
+    plateLabels.update(platesView);
+  })
+  .catch((err) => layerFailed('plates', err));
 
 // ---------------------------------------------------------------------------
 // Fontes (sources.json): carregadas uma vez; se falhar, os detalhes da fonte
@@ -134,12 +164,13 @@ function openFeature(layerId, props, point) {
   else if (layerId === 'geo_units') openUnit(p);
   else if (layerId === 'macrostrat') openDetails(() => renderMacrostratUnit(p));
   else if (layerId === 'volcanoes') openDetails(() => renderVolcano(p, { source: sourceOf(p) }));
+  else if (layerId === 'plates') openDetails(() => renderPlateBoundary(p, { source: sourceOf(p) }));
   else if (layerId === 'tectonic_zones') openDetails(() => renderZone(p, { source: sourceOf(p) }));
 }
 
 // ---------------------------------------------------------------------------
 // Clique no mapa: a feicao de cima entre as camadas interativas.
-const CLICK_LAYERS = ['samples:points', 'volcanoes', 'tectonic_zones', 'geo_units', 'macrostrat'];
+const CLICK_LAYERS = ['samples:points', 'volcanoes', 'tectonic_zones', 'plates', 'geo_units', 'macrostrat'];
 const HIT_PAD = 4; // px de folga (linhas finas)
 
 function featuresAt(point) {

@@ -1,0 +1,5 @@
+{"type":"FeatureCollection","features":[
+{"type":"Feature","geometry":{"type":"Point","coordinates":[10,15]},"properties":{"code":"SA","name":"Placa Sintética A","source_id":"pb2002_plates"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-100,0]},"properties":{"code":"SB","name":"Placa Sintética B","source_id":"pb2002_plates"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[170,-20]},"properties":{"code":"SC","name":"SC","source_id":"pb2002_plates"}}
+]}

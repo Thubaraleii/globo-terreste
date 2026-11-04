@@ -6,5 +6,13 @@
     "attribution": "Atribuição sintética",
     "source_url": "https://example.com/sintetico",
     "original_scale": "1:1 (sintético)"
+  },
+  {
+    "source_id": "pb2002",
+    "institution": "Instituição PLACAS sintética",
+    "license": "LICENÇA-PLACAS (somente teste)",
+    "attribution": "Atribuição placas sintética",
+    "source_url": "https://example.com/placas",
+    "original_scale": null
   }
 ]
