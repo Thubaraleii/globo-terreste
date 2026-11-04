@@ -1,5 +1,6 @@
 {"type":"FeatureCollection","features":[
-{"type":"Feature","geometry":{"type":"Point","coordinates":[10,15]},"properties":{"code":"SA","name":"Placa Sintética A","source_id":"pb2002_plates"}},
-{"type":"Feature","geometry":{"type":"Point","coordinates":[-100,0]},"properties":{"code":"SB","name":"Placa Sintética B","source_id":"pb2002_plates"}},
-{"type":"Feature","geometry":{"type":"Point","coordinates":[170,-20]},"properties":{"code":"SC","name":"SC","source_id":"pb2002_plates"}}
+{"type":"Feature","geometry":{"type":"Point","coordinates":[10,15]},"properties":{"code":"SA","name":"Placa Sintética A","area_km2":50000000,"source_id":"pb2002_plates"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-100,0]},"properties":{"code":"SB","name":"Placa Sintética B","area_km2":20000000,"source_id":"pb2002_plates"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[170,-20]},"properties":{"code":"SC","name":"SC","area_km2":12000000,"source_id":"pb2002_plates"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[0,0]},"properties":{"code":"SD","name":"Placa Pequena","area_km2":100000,"source_id":"pb2002_plates"}}
 ]}

@@ -199,18 +199,23 @@ test('Placas: camada e nomes ligam e desligam juntos pelo painel e somem com o z
   await expect(cb).toBeChecked();
   await expect(page.locator('[data-legend-for="plates"]')).toContainText('zonas mais ativas');
   expect(await visibility(page, 'plates')).toBe('visible');
-  await expect.poll(async () => (await labelStates(page)).length).toBe(3);
+  await expect.poll(async () => (await labelStates(page)).length).toBe(4);
   const labels = await labelStates(page);
-  expect(labels.every((l) => !l.off && l.pe === 'none')).toBe(true);
-  expect(labels.map((l) => l.text)).toContain('Placa Sintética A');
+  expect(labels.every((l) => l.pe === 'none')).toBe(true);
+  // placa grande aparece no globo inteiro; a pequena so ao aproximar (menos poluicao)
+  expect(labels.filter((l) => !l.off).map((l) => l.text).sort())
+    .toEqual(['Placa Sintética A', 'Placa Sintética B', 'SC']);
+  expect(labels.find((l) => l.text === 'Placa Pequena').off).toBe(true);
   await cb.uncheck();
   await expect.poll(() => visibility(page, 'plates')).toBe('none');
   await expect.poll(async () => (await labelStates(page)).every((l) => l.off)).toBe(true);
   await expect.poll(() => page.evaluate(() => window.location.hash)).not.toContain('plates');
   await cb.check();
   await expect.poll(() => visibility(page, 'plates')).toBe('visible');
+  await expect.poll(async () => (await labelStates(page)).filter((l) => !l.off).length).toBe(3);
+  // zoom 5.7: a pequena aparece; zoom alto (7.5): todos os nomes somem, as linhas ficam
+  await page.evaluate(() => window.geoworldMap.jumpTo({ zoom: 5.7 }));
   await expect.poll(async () => (await labelStates(page)).every((l) => !l.off)).toBe(true);
-  // zoom alto: os nomes somem, as linhas ficam
   await page.evaluate(() => window.geoworldMap.jumpTo({ zoom: 7.5 }));
   await expect.poll(async () => (await labelStates(page)).every((l) => l.off)).toBe(true);
   expect(await visibility(page, 'plates')).toBe('visible');

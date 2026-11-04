@@ -6,7 +6,7 @@ import { DEFAULT_STATE, decodeState, encodeState } from '../js/urlstate.js';
 import { buildSources, buildLayers, legendItems } from '../js/layerstyles.js';
 import { renderPlateBoundary, NAO_INFORMADO } from '../js/inspector.js';
 import {
-  buildLabelSpecs, labelsVisible, LABEL_MAX_ZOOM,
+  buildLabelSpecs, labelsVisible, labelMinZoom, LABEL_MAX_ZOOM,
 } from '../js/platelabels.js';
 
 const BASE = 'http://localhost/data/';
@@ -74,23 +74,23 @@ test('renderPlateBoundary: nulo vira nao informado; tipo vazio nao classificado;
 });
 
 const fc = (features) => ({ type: 'FeatureCollection', features });
-const pt = (code, name, lng, lat) => ({
-  type: 'Feature', geometry: { type: 'Point', coordinates: [lng, lat] }, properties: { code, name, source_id: 'pb2002' },
+const pt = (code, name, lng, lat, area_km2 = 1e7) => ({
+  type: 'Feature', geometry: { type: 'Point', coordinates: [lng, lat] }, properties: { code, name, area_km2, source_id: 'pb2002' },
 });
 
 test('buildLabelSpecs: um rotulo por codigo, nome com fallback ao codigo, invalidos descartados', () => {
   const specs = buildLabelSpecs(fc([
     pt('PA', 'Pacific', -140, 0),
     pt('PA', 'Pacific', 150, 10), // codigo repetido: vale o primeiro
-    pt('ZZ', null, 10, 10),
+    pt('ZZ', null, 10, 10, null),
     pt('BAD', 'x', 'a', 1),
     { type: 'Feature', geometry: null, properties: { code: 'N', name: 'n' } },
     pt('LON', 'Fora', 200, 0),
     pt('', 'Sem codigo', 1, 1),
   ]));
   assert.deepEqual(specs, [
-    { code: 'PA', name: 'Pacific', lng: -140, lat: 0 },
-    { code: 'ZZ', name: 'ZZ', lng: 10, lat: 10 },
+    { code: 'PA', name: 'Pacific', lng: -140, lat: 0, area: 1e7 },
+    { code: 'ZZ', name: 'ZZ', lng: 10, lat: 10, area: null },
   ]);
   assert.deepEqual(buildLabelSpecs(null), []);
   assert.deepEqual(buildLabelSpecs({}), []);
@@ -103,4 +103,19 @@ test('labelsVisible: so com a camada ligada e abaixo do zoom limite', () => {
   assert.equal(labelsVisible(true, 6.1), false);
   assert.equal(labelsVisible(false, 1.5), false);
   assert.equal(labelsVisible(true, Number.NaN), false);
+  // zoom minimo do proprio rotulo
+  assert.equal(labelsVisible(true, 2, 3), false);
+  assert.equal(labelsVisible(true, 3, 3), true);
+});
+
+test('labelMinZoom: placas grandes desde o inicio, pequenas so ao aproximar', () => {
+  assert.equal(labelMinZoom(104e6), 0);
+  assert.equal(labelMinZoom(12e6), 0);
+  assert.equal(labelMinZoom(5e6), 2.5);
+  assert.equal(labelMinZoom(2e6), 3.5);
+  assert.equal(labelMinZoom(5e5), 4.5);
+  assert.equal(labelMinZoom(8e3), 5.5);
+  assert.equal(labelMinZoom(null), 3.5); // sem area: nem o maior nem o menor
+  assert.equal(labelMinZoom(Number.NaN), 3.5);
+  assert.ok(labelMinZoom(1) <= LABEL_MAX_ZOOM);
 });

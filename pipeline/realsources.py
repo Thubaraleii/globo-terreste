@@ -220,7 +220,7 @@ def load_plate_boundaries(path: Path) -> gpd.GeoDataFrame:
 
 
 def load_plate_labels(path: Path) -> gpd.GeoDataFrame:
-    """PB2002 plates.json -> camada plate_labels: um ponto por codigo de placa.
+    """PB2002 plates.json -> camada plate_labels: um ponto por codigo de placa (+ `area_km2`).
     Codigos com varios poligonos (placas cortadas no antimeridiano, ilhas) usam a maior
     parte (maior area em graus) e `representative_point` dela, que fica dentro do
     poligono e longe da borda +-180 da parte menor."""
@@ -228,6 +228,7 @@ def load_plate_labels(path: Path) -> gpd.GeoDataFrame:
     fc = json.loads(path.read_text(encoding="utf-8"))
     names = read_plate_names(path)
     best: dict[str, tuple[float, object]] = {}
+    parts_by_code: dict[str, list] = {}
     for f in fc["features"]:
         code = _clean_code((f.get("properties") or {}).get("Code"))
         if code is None or not f.get("geometry"):
@@ -235,12 +236,18 @@ def load_plate_labels(path: Path) -> gpd.GeoDataFrame:
         for part in shapely.get_parts(shape(f["geometry"])):
             if part.is_empty:
                 continue
+            parts_by_code.setdefault(code, []).append(part)
             if code not in best or part.area > best[code][0]:
                 best[code] = (part.area, part)
     codes = sorted(best)
+    # area total da placa (todas as partes) em projecao de area igual (EPSG:6933), em km2:
+    # a web usa para escolher a partir de que zoom cada nome aparece (placas pequenas depois)
+    area = {c: float(gpd.GeoSeries(parts_by_code[c], crs=CRS).to_crs("EPSG:6933").area.sum()) / 1e6
+            for c in codes}
     out = gpd.GeoDataFrame({
         "code": codes,
         "name": [names.get(c, c) for c in codes],
+        "area_km2": [round(area[c], 1) for c in codes],
     }, geometry=[best[c][1].representative_point() for c in codes], crs=CRS)
     out.attrs.update({"plates": len(out)})
     return out

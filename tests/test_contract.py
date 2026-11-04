@@ -67,7 +67,8 @@ def load_plate_segments(path, **_):
 
 def load_plate_points(path, **_):
     rows = _read_json(path)
-    return gpd.GeoDataFrame({"code": [r["code"] for r in rows], "name": [r["name"] for r in rows]},
+    return gpd.GeoDataFrame({"code": [r["code"] for r in rows], "name": [r["name"] for r in rows],
+         "area_km2": [r["area_km2"] for r in rows]},
                             geometry=[Point(r["xy"]) for r in rows], crs=CRS)
 
 
@@ -120,7 +121,7 @@ def exported(tmp_path, monkeypatch):
          "plate_b_name": "Placa B", "type": "subduction", "line": [[0, 0], [1, 1]]},
         {"name": "BB-CC", "plate_a": "BB", "plate_b": "CC", "plate_a_name": "Placa B",
          "plate_b_name": "CC", "type": None, "line": [[1, 1], [2, 1]]}])
-    _write(raw, "lab.json", [{"code": "AA", "name": "Placa A", "xy": [0.5, 0.5]}])
+    _write(raw, "lab.json", [{"code": "AA", "name": "Placa A", "area_km2": 1230000.5, "xy": [0.5, 0.5]}])
     _write(raw, "a.json", [{"sid": "a1", "rock": "basalto", "lat": 1.0, "lon": 1.0},
                            {"sid": "a2", "rock": "basalto", "lat": 40.0, "lon": 40.0}])
     _write(raw, "b.json", [{"sid": "b1", "rock": "basalto", "lat": 1.0, "lon": 1.0}])

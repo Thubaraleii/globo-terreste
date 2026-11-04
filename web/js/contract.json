@@ -52,6 +52,7 @@
   "plate_labels": {
     "code": "string",
     "name": "string",
+    "area_km2": "number",
     "source_id": "string"
   },
   "geo_units": {

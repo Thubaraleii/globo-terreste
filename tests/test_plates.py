@@ -55,7 +55,7 @@ def test_schemas_declare_plate_layers():
     assert SCHEMAS["plate_boundaries"] == [
         "name", "plate_a", "plate_b", "plate_a_name", "plate_b_name", "type",
         "source_id", "geometry"]
-    assert SCHEMAS["plate_labels"] == ["code", "name", "source_id", "geometry"]
+    assert SCHEMAS["plate_labels"] == ["code", "name", "area_km2", "source_id", "geometry"]
 
 
 def test_load_plate_boundaries_keeps_every_segment_with_names(raw):
@@ -85,6 +85,15 @@ def test_load_plate_labels_one_point_per_code(raw):
     by = out.set_index("code")
     assert by.loc["AA", "name"] == "Placa Alfa"
     assert by.loc["XX", "name"] == "XX"  # nomes conflitantes: nao inventa, usa o codigo
+
+
+def test_label_area_km2_sums_all_parts_of_the_plate(raw):
+    by = rs.load_plate_labels(raw / "pb2002" / "plates.json").set_index("code")
+    # 10x10 graus junto ao equador: ~1,23 milhao de km2 (area igual, nao graus)
+    assert by.loc["AA", "area_km2"] == pytest.approx(1.23e6, rel=0.03)
+    # PA = metade grande (80x80) + pequena (10x80): soma das duas partes
+    assert 7e7 < by.loc["PA", "area_km2"] < 9e7   # (80x80 + 10x80 graus) em area igual
+    assert by.loc["XX", "area_km2"] > 0
 
 
 def test_label_point_of_split_plate_uses_largest_part_inside_it(raw):

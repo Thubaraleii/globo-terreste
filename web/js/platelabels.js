@@ -7,7 +7,7 @@ export const LABEL_MAX_ZOOM = 6;
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 
-// plate_labels.geojson -> [{ code, name, lng, lat }]. Um por codigo (vale o primeiro);
+// plate_labels.geojson -> [{ code, name, lng, lat, area }]. Um por codigo (vale o primeiro);
 // nome ausente cai no codigo; geometria que nao e Point valido (lon/lat em faixa) e descartada.
 export function buildLabelSpecs(fc) {
   const out = [];
@@ -22,13 +22,24 @@ export function buildLabelSpecs(fc) {
     const name = typeof f.properties.name === 'string' && f.properties.name.trim() !== ''
       ? f.properties.name.trim() : code;
     seen.add(code);
-    out.push({ code, name, lng, lat });
+    out.push({ code, name, lng, lat, area: isNum(f.properties.area_km2) ? f.properties.area_km2 : null });
   }
   return out;
 }
 
-export function labelsVisible(layerOn, zoom) {
-  return Boolean(layerOn) && isNum(zoom) && zoom <= LABEL_MAX_ZOOM;
+// Zoom a partir do qual o nome de uma placa aparece, pela area (km2): as dez maiores desde o
+// globo inteiro; as pequenas so ao aproximar, para os nomes nao se sobreporem.
+export function labelMinZoom(areaKm2) {
+  if (!isNum(areaKm2)) return 3.5;
+  if (areaKm2 >= 1e7) return 0;
+  if (areaKm2 >= 3e6) return 2.5;
+  if (areaKm2 >= 1e6) return 3.5;
+  if (areaKm2 >= 3e5) return 4.5;
+  return 5.5;
+}
+
+export function labelsVisible(layerOn, zoom, minZoom = 0) {
+  return Boolean(layerOn) && isNum(zoom) && zoom >= minZoom && zoom <= LABEL_MAX_ZOOM;
 }
 
 // Cria os marcadores uma unica vez. `failed()` tambem desliga tudo (dados que nao carregaram).
@@ -44,14 +55,15 @@ export function mountPlateLabels(map, specs) {
     const marker = new maplibregl.Marker({ element: el, opacity: '1', opacityWhenCovered: '0' })
       .setLngLat([s.lng, s.lat])
       .addTo(map);
-    return { el, marker };
+    return { el, marker, minZoom: labelMinZoom(s.area) };
   });
   const state = { layerOn: false, opacity: 1, disabled: false };
 
   function apply() {
-    const show = !state.disabled && labelsVisible(state.layerOn, map.getZoom());
-    for (const { el, marker } of markers) {
-      el.classList.toggle('is-off', !show);
+    const zoom = map.getZoom();
+    const on = !state.disabled && state.layerOn;
+    for (const { el, marker, minZoom } of markers) {
+      el.classList.toggle('is-off', !labelsVisible(on, zoom, minZoom));
       marker.setOpacity(String(state.opacity), '0');
     }
   }

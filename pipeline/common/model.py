@@ -37,7 +37,7 @@ SCHEMAS: dict[str, list[str]] = {
         "name", "plate_a", "plate_b", "plate_a_name", "plate_b_name", "type",
         "source_id", "geometry",
     ],
-    "plate_labels": ["code", "name", "source_id", "geometry"],
+    "plate_labels": ["code", "name", "area_km2", "source_id", "geometry"],
 }
 
 # None = sem geometria; "Unknown" = tipo aberto.
@@ -54,6 +54,7 @@ GEOMETRY_TYPES: dict[str, str | None] = {
 _NUMERIC = {
     "coord_uncertainty_m": "float64",
     "moment_total": "float64",
+    "area_km2": "float64",
     "rank": "Int64",
 }
 
