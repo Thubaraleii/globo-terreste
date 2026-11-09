@@ -30,12 +30,14 @@ Dentro:
 - faixa de 20°S a 40°S, da costa brasileira (aprox. 60°W a 40°W) à costa africana
   (aprox. 5°E a 35°E), incluindo a margem continental e o oceano entre elas;
 - relevo e batimetria atuais, movidos como blocos rígidos;
-- camadas: lineamentos (SGB, CGMW-BRGM e os do usuário), vulcões (GVP) e amostras
-  (GEOROC), nas mesmas regras de dados locais do globo;
+- camadas: lineamentos (SGB, CGMW-BRGM e os do usuário) e vulcões (GVP), nas mesmas
+  regras de dados locais do globo;
 - exagero vertical, vistas oblíqua e planta, link de ida e volta com o globo.
 
 Fora (não será feito agora):
 - reconstruir o relevo do passado (o relevo é o atual, só movido);
+- amostras GEOROC (a posição delas depende da idade de cada uma, não de um corpo
+  rígido contínuo; ficam para uma segunda etapa);
 - satélite Esri no repositório (opcional, só carregado ao vivo);
 - perfis W→E e S→N, rosetas de direção, poços (existem no Panorama; ficam para depois);
 - outras faixas além do Atlântico Sul.
@@ -44,10 +46,11 @@ Fora (não será feito agora):
 
 Novo módulo `pipeline/rift3d.py`, no mesmo estilo de `pipeline/paleo.py`.
 
-1. **Relevo.** Baixa os tiles AWS Terrain Tiles (formato terrarium) que cobrem a
-   faixa, num zoom que dê cerca de 2 km por célula, e monta uma grade de alturas
-   (metros, batimetria negativa). Os tiles baixados ficam em `data/raw/`
-   (fora do git).
+1. **Relevo.** Baixa os tiles AWS Terrain Tiles (formato terrarium, zoom 5) que cobrem
+   a faixa e monta uma grade de alturas de 0,05° (cerca de 5 km; metros, batimetria
+   negativa). Os tiles baixados ficam em `data/raw/` (fora do git). A cor do relevo
+   (hipsometria e batimetria) é calculada na página a partir da altura, sem textura
+   assada.
 2. **Placa por célula.** Cada célula recebe o ID de placa pelos polígonos estáticos
    do modelo (`StaticPolygons/shapes_static_polygons_Merdith_etal.gpml`), como já
    é feito para os vulcões em `plate_ids`. Células sem placa ficam com ID nulo e
@@ -109,7 +112,7 @@ mostra com estilo tracejado.
 - Onde o modelo separa a África em várias placas, as malhas podem se sobrepor ou
   deixar vãos. A página mostra isso e não corrige.
 - O exagero vertical muda a aparência, não os dados.
-- A grade de 2 km é só visual; não serve para medições.
+- A grade de 5 km é só visual; não serve para medições.
 
 ## 8. Testes
 
