@@ -20,5 +20,6 @@ playwright-report/
 data/out/
 # lineamentos derivados do SGB (licenca nao declarada no servico): locais
 web/data/paleo/lineaments_*.geojson
+web/data/rift3d/
 data/curated/lineaments/sgb_*.geojson
 data/curated/lineaments/brgm_*.geojson
