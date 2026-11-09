@@ -125,7 +125,15 @@ Barra "Linhas de costa antigas" na base do globo: deslizante de idade (passos de
   *Geologia, Tectônica e Recursos Minerais do Brasil* (2004, 1:1.000.000; servidor ArcGIS do SGB, sem licença declarada, uso de
   pesquisa com citação). `scripts/make_sgb_lineaments.py` seleciona **falhas e zonas de cisalhamento** de segmento
   ≥ 50 km (sem fraturas e sem traços de foliação) — critério nosso, não interpretação: 1.328 segmentos. Os arquivos
-  derivados ficam **fora do git**. **A África ainda não tem fonte:** sem o outro lado, não há como "ligar" as duas costas.
+  derivados ficam **fora do git**.
+- **Lineamentos da África (CGMW–BRGM, local):** `scripts/make_brgm_lineaments.py` converte a camada de **falhas**
+  (`AFR_CGMW_BRGM_10M_Faults`, 2.644 linhas, 1:10.000.000, 3ª edição 2016) do WFS do BRGM/OneGeology. Termos do serviço:
+  uso pessoal, de ensino, de pesquisa ou **não comercial**; copyright CGMW/BRGM; citar
+  "Geological Map of Africa at 1:10 M scale, CGMW-BRGM 2016". É camada de falhas (Fault, Thrust, Normal e as
+  "Inferred"): **não** há classe "zona de cisalhamento". O Brasil (1:1 M) e a África (1:10 M) têm escalas e
+  critérios diferentes: não compare densidade entre os dois lados. A África é dividida em vários blocos pelo modelo
+  (placas 701, 714, 715...); 264 falhas cruzam blocos e são giradas pela placa do ponto médio (marcadas
+  `plates_differ`), então a posição delas em idades antigas é aproximada.
 - **Botão "Girar globo":** rotação automática (liga/desliga); arrastar, rolar ou tocar no mapa a desliga.
 - **Limites:** é uma reconstrução interpretativa. Zonas, placas e amostras continuam nas
   posições atuais (não são girados ainda). O Scotese/PALEOMAP (usado pelo dinosaurpictures.org) não foi

@@ -21,3 +21,4 @@ data/out/
 # lineamentos derivados do SGB (licenca nao declarada no servico): locais
 web/data/paleo/lineaments_*.geojson
 data/curated/lineaments/sgb_*.geojson
+data/curated/lineaments/brgm_*.geojson
