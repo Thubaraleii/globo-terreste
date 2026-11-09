@@ -5,7 +5,7 @@ import { baseStyle } from './basemaps.js';
 import { ATTRIBUTION_FALLBACK } from './inspector.js';
 
 const URL_DEBOUNCE_MS = 250;
-const PLACEHOLDER = 'Passe o cursor sobre o mapa';
+const PLACEHOLDER = ''; // sem mensagem parada na base; as coordenadas aparecem ao passar o cursor
 const appStates = new WeakMap();
 const timers = new WeakMap();
 
@@ -61,9 +61,12 @@ const attributionControls = new WeakMap();
 export function setDataAttribution(map, html) {
   const old = attributionControls.get(map);
   if (old) map.removeControl(old);
-  const ctrl = new maplibregl.AttributionControl({ compact: false, customAttribution: html });
+  const ctrl = new maplibregl.AttributionControl({ compact: true, customAttribution: html });
   attributionControls.set(map, ctrl);
   map.addControl(ctrl, 'bottom-right');
+  // comeca recolhido (so o icone ⓘ); os creditos abrem ao clicar nele
+  ctrl._container?.classList.remove('maplibregl-compact-show');
+  ctrl._container?.removeAttribute('open');
 }
 
 export function createMap(container, state) {

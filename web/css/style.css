@@ -316,10 +316,9 @@ html, body {
 /* Paleogeografia: barra de tempo na base do globo. */
 .paleo-bar {
   position: fixed;
-  left: 50%;
-  bottom: 96px; /* acima da linha de atribuicao */
-  transform: translateX(-50%);
-  width: min(560px, calc(100vw - 2 * var(--gutter)));
+  right: var(--gutter);
+  bottom: 40px; /* acima do botao de creditos */
+  width: min(440px, calc(100vw - 2 * var(--gutter)));
   box-sizing: border-box;
   padding: 10px 14px;
   border: 1px solid var(--border);
@@ -348,7 +347,7 @@ html, body {
 .paleo-controls output { flex: none; min-width: 9.5em; text-align: right; }
 .paleo-credit { margin: 6px 0 0; font-size: 11px; color: var(--text-muted); }
 @media (max-width: 719px) {
-  .paleo-bar { bottom: 56px; }
+  .paleo-bar { bottom: 56px; left: var(--gutter); }
 }
 
 /* Botao de rotacao automatica do globo (abaixo dos controles de zoom, canto direito). */
@@ -366,3 +365,7 @@ html, body {
   cursor: pointer;
 }
 .spin-toggle.is-on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+/* Filtros das amostras ocultos no painel (a logica continua no codigo; remova esta regra para voltar). */
+.layer-filters { display: none; }
+.coords-readout:empty { display: none; }
