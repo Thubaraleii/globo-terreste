@@ -2,6 +2,7 @@
 import { createScene, addPlateMeshes } from './scene.js';
 import { parseGrid } from './terrain.js';
 import { quatAt } from './rotation.js';
+import { mountLayers } from './layers-mount.js';
 import { ageLabel } from '../paleo.js';
 
 const BASE = 'data/rift3d/';
@@ -44,7 +45,8 @@ async function main() {
   }
   const { grid, rotations, index } = data;
   let exag = Number($('exag').value);
-  const plates = addPlateMeshes(ctx, grid, exag);
+  const plates = addPlateMeshes(ctx, grid, exag, Object.keys(rotations).map(Number));
+  const layers = await mountLayers(ctx, plates, grid, rotations, exag);
   $('credit').textContent = `Modelo: ${index.model.name} (${index.model.licence}). Relevo: ${index.terrain}`;
 
   let age = 0;
@@ -56,19 +58,13 @@ async function main() {
       const q = quatAt(rotations[String(pid)], a);
       g.quaternion.set(q[0], q[1], q[2], q[3]);
     }
-    main.onAge?.(a);
   }
-  main.applyAge = applyAge;
-  main.ctx = ctx;
-  main.data = data;
-  main.plates = plates;
-  main.getExag = () => exag;
 
   $('age').addEventListener('input', (e) => { stop(); applyAge(Number(e.target.value)); });
   $('exag').addEventListener('change', (e) => {
     exag = Number(e.target.value);
     plates.rebuild(exag);
-    main.onExag?.(exag);
+    layers.setExag(exag);
   });
   $('view-oblique').addEventListener('click', () => ctx.setView('oblique'));
   $('view-plan').addEventListener('click', () => ctx.setView('plan'));
@@ -100,7 +96,6 @@ async function main() {
   });
   applyAge(0);
   requestAnimationFrame(tick);
-  main.mountLayers?.();
 }
 
 main();

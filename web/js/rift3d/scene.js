@@ -79,10 +79,11 @@ export function createScene(container) {
 }
 
 // Um grupo por placa (a rotacao do quadro atual vai no quaternion do grupo). rebuild(exag) refaz as malhas.
-export function addPlateMeshes(ctx, grid, exag) {
+// plateIds: todas as placas com rotacao (placas sem malha tambem tem grupo, para as camadas girarem com elas).
+export function addPlateMeshes(ctx, grid, exag, plateIds = grid.meta.plates) {
   const groups = new Map();
   const material = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-  for (const pid of grid.meta.plates) {
+  for (const pid of plateIds) {
     const g = new THREE.Group();
     groups.set(pid, g);
     ctx.scene.add(g);
@@ -95,6 +96,7 @@ export function addPlateMeshes(ctx, grid, exag) {
           g.remove(child);
         }
       }
+      if (!grid.meta.plates.includes(pid)) continue;
       const m = buildPlateMesh(grid, pid, newExag);
       if (m.indices.length === 0) continue;
       const geo = new THREE.BufferGeometry();
