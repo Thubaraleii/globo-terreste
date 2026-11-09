@@ -104,7 +104,12 @@ Barra "Linhas de costa antigas" na base do globo: deslizante de idade (passos de
 - **Gerar:** baixe `Merdith_etal_2021_ESR_v1.2.4.zip` do Zenodo, extraia em `data/raw/paleo/merdith/`
   (ignorado pelo git) e rode `python pipeline/paleo.py` (requer `pygplates`). Saída em `web/data/paleo/`
   (~2 MB por idade, carregada sob demanda; ignorada pelo git).
-- **Limites:** é uma reconstrução interpretativa. Vulcões, zonas, placas e amostras continuam nas
+- **Vulcões girados:** cada vulcão recebe a placa dos polígonos estáticos do modelo e é levado para onde
+  essa placa estava na idade escolhida (`web/data/paleo/volcanoes_<idade>.geojson`). Os vulcões não
+  existiam nessa idade: a posição mostra onde estava a crosta que hoje os sustenta. Pontos sem placa
+  seriam omitidos (na geração atual: 0 de 1.214).
+- **Botão "Girar globo":** rotação automática (liga/desliga); arrastar, rolar ou tocar no mapa a desliga.
+- **Limites:** é uma reconstrução interpretativa. Zonas, placas e amostras continuam nas
   posições atuais (não são girados ainda). O Scotese/PALEOMAP (usado pelo dinosaurpictures.org) não foi
   incluído por ter licença de uso menos clara.
 

@@ -350,3 +350,19 @@ html, body {
 @media (max-width: 719px) {
   .paleo-bar { bottom: 56px; }
 }
+
+/* Botao de rotacao automatica do globo (abaixo dos controles de zoom, canto direito). */
+.spin-toggle {
+  position: fixed;
+  top: calc(var(--gutter) + 104px);
+  right: var(--gutter);
+  z-index: 3;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font: 600 13px/1.2 system-ui, sans-serif;
+  cursor: pointer;
+}
+.spin-toggle.is-on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }

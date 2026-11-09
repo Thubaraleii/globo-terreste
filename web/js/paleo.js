@@ -82,8 +82,21 @@ export async function mountPaleo(map, base, root) {
   let age = ages[ages.length - 1];
   slider.value = String(ageToSlider(age));
   credit.textContent = `Linhas de costa reconstruídas: ${index.model?.name ?? 'modelo'} — ${index.model?.licence ?? ''}. `
-    + 'Reconstrução interpretativa, não observação. As demais camadas (vulcões, placas, amostras, zonas) '
-    + 'continuam nas posições atuais.';
+    + 'Reconstrução interpretativa, não observação. Os vulcões são levados para onde a placa sob eles estava '
+    + '(não existiam nessa idade); placas, zonas e amostras continuam nas posições atuais.';
+
+  // Vulcoes girados (so se o pipeline os gerou): cada ponto vai para onde a sua placa estava.
+  const volcSource = index.volcanoes ? map.getSource('volcanoes') : null;
+  const volcOriginal = volcSource ? volcSource.serialize().data : null; // URL dos dados atuais
+  const volcCache = new Map();
+  async function volcFrame(a) {
+    if (volcCache.has(a)) return volcCache.get(a);
+    const res = await fetch(`${base}paleo/volcanoes_${a}.geojson`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const fc = await res.json();
+    volcCache.set(a, fc);
+    return fc;
+  }
 
   async function show(a) {
     age = a;
@@ -91,9 +104,10 @@ export async function mountPaleo(map, base, root) {
     label.textContent = ageLabel(a);
     const my = ++token;
     try {
-      const fc = await frame(a);
+      const [fc, vfc] = await Promise.all([frame(a), volcSource ? volcFrame(a) : null]);
       if (my !== token) return; // chegou um quadro mais novo
       map.getSource(SRC).setData(fc);
+      if (volcSource) volcSource.setData(a === 0 ? volcOriginal : vfc);
       status.textContent = '';
     } catch (err) {
       console.warn('Falha ao carregar quadro paleo', a, err);
@@ -126,8 +140,11 @@ export async function mountPaleo(map, base, root) {
     slider.disabled = !on;
     play.disabled = !on;
     root.classList.toggle('is-on', on);
-    if (!on) stop();
-    else show(age);
+    if (!on) {
+      stop();
+      token += 1; // descarta quadros em voo
+      if (volcSource) volcSource.setData(volcOriginal);
+    } else show(age);
   }
 
   toggle.addEventListener('change', () => setOn(toggle.checked));
