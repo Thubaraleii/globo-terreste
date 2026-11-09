@@ -13,9 +13,14 @@ const files = [
   ['node_modules/maplibre-gl/dist/maplibre-gl.css', 'maplibre-gl.css'],
   ['node_modules/maplibre-gl/LICENSE.txt', 'maplibre-gl.LICENSE.txt'],
   ['node_modules/pmtiles/dist/pmtiles.js', 'pmtiles.js'],
+  // vista 3D (rift3d.html): Three.js como modulo ES + OrbitControls
+  ['node_modules/three/build/three.module.js', 'three/three.module.js'],
+  ['node_modules/three/examples/jsm/controls/OrbitControls.js', 'three/OrbitControls.js'],
+  ['node_modules/three/LICENSE', 'three/three.LICENSE.txt'],
 ];
 
 for (const [from, to] of files) {
+  mkdirSync(dirname(join(out, to)), { recursive: true });
   copyFileSync(join(root, from), join(out, to));
   console.log(`vendor: ${from} -> web/vendor/${to}`);
 }

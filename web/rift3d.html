@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>GeoWorld 3D: abertura do Atlântico Sul</title>
+  <link rel="stylesheet" href="css/rift3d.css">
+  <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js" } }</script>
+</head>
+<body>
+  <main id="stage" aria-label="Relevo 3D da faixa Brasil–África"></main>
+
+  <aside id="controls" class="controls" aria-label="Controles da vista 3D">
+    <h1>Abertura do Atlântico Sul</h1>
+    <a class="back" href="index.html">← Globo</a>
+
+    <div class="row">
+      <button id="play" type="button" aria-pressed="false">▶ Animar</button>
+      <input id="age" type="range" min="0" max="150" step="1" value="0" aria-label="Idade da reconstrução" aria-describedby="age-label">
+    </div>
+    <output id="age-label" for="age">Hoje (0 Ma)</output>
+
+    <div class="row">
+      <label for="exag">Exagero vertical</label>
+      <select id="exag">
+        <option value="10">10×</option>
+        <option value="20">20×</option>
+        <option value="40" selected>40×</option>
+        <option value="80">80×</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <span>Vista</span>
+      <button id="view-oblique" type="button">Oblíqua</button>
+      <button id="view-plan" type="button">Planta</button>
+    </div>
+
+    <fieldset id="layers" class="layers" hidden>
+      <legend>Camadas</legend>
+      <label id="row-lineaments" hidden><input id="toggle-lineaments" type="checkbox"> Lineamentos</label>
+      <label id="row-volcanoes" hidden><input id="toggle-volcanoes" type="checkbox"> Vulcões (GVP)</label>
+      <p id="layers-note" class="note"></p>
+    </fieldset>
+
+    <p id="status" role="status"></p>
+    <p id="credit" class="note"></p>
+  </aside>
+
+  <section id="feature-info" class="feature-info" role="region" aria-label="Detalhes da feição" hidden></section>
+
+  <script type="module" src="js/rift3d/main.js"></script>
+</body>
+</html>

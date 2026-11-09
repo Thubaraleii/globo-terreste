@@ -1,0 +1,29 @@
+:root { color-scheme: dark; --bg: #07121f; --panel: rgba(10, 24, 40, 0.88); --fg: #e6eef7; --muted: #9db1c6; --accent: #4fb3ff; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, sans-serif; }
+#stage { position: fixed; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; }
+
+.controls { position: fixed; top: 12px; left: 12px; width: min(320px, calc(100vw - 24px)); padding: 12px 14px;
+  background: var(--panel); border: 1px solid #1d3a57; border-radius: 10px; max-height: calc(100vh - 24px); overflow: auto; }
+.controls h1 { font-size: 16px; margin: 0 0 4px; }
+.back { color: var(--accent); text-decoration: none; font-size: 13px; }
+.row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.row input[type="range"] { flex: 1; min-width: 120px; }
+button, select { background: #11304d; color: var(--fg); border: 1px solid #2a5580; border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+button:hover, select:hover { border-color: var(--accent); }
+button[aria-pressed="true"] { background: var(--accent); color: #04121f; }
+#age-label { display: block; margin-top: 4px; color: var(--accent); font-weight: 600; }
+.layers { margin: 12px 0 0; padding: 8px 10px; border: 1px solid #1d3a57; border-radius: 8px; }
+.layers legend { color: var(--muted); padding: 0 4px; }
+.layers label { display: block; margin: 4px 0; }
+.layers label[hidden], .layers[hidden], .feature-info[hidden] { display: none; }
+.note { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+#status { color: #ffb86b; margin: 10px 0 0; min-height: 1em; }
+
+.feature-info { position: fixed; right: 12px; bottom: 12px; width: min(360px, calc(100vw - 24px)); padding: 10px 12px;
+  background: var(--panel); border: 1px solid #1d3a57; border-radius: 10px; font-size: 13px; }
+.feature-info dt { color: var(--muted); font-size: 12px; margin-top: 6px; }
+.feature-info dd { margin: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 600px) { .controls { top: auto; bottom: 12px; max-height: 45vh; } .feature-info { bottom: auto; top: 12px; } }

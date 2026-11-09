@@ -49,9 +49,10 @@ test('buildPlateMesh: placa de uma coluna so nao gera triangulos', () => {
   assert.equal(buildPlateMesh(g, 701, 1).indices.length, 0);
 });
 
-test('buildPlateMesh: 2 colunas x 3 linhas validas = 4 triangulos; nodata no centro pula todos os quads', () => {
+test('buildPlateMesh: o quad pertence a placa do canto noroeste (4 quads = 8 triangulos); nodata no centro pula todos', () => {
+  // sem vao entre placas: a placa 201 leva os quads que comecam nas suas celulas, mesmo que o canto leste seja da 701
   const ok = buildPlateMesh(parseGrid(meta, makeBuffer(flat, P)), 201, 1);
-  assert.equal(ok.indices.length, 12);
+  assert.equal(ok.indices.length, 24);
   const h = [...flat];
   h[4] = NODATA;
   const holed = buildPlateMesh(parseGrid(meta, makeBuffer(h, P)), 201, 1);
@@ -72,7 +73,7 @@ test('buildPlateMesh: raio cresce com a altura e o exagero, e afunda em batimetr
 test('buildPlateMesh: cores e posicoes com o mesmo numero de vertices', () => {
   const m = buildPlateMesh(parseGrid(meta, makeBuffer(flat, P)), 201, 1);
   assert.equal(m.colors.length, m.positions.length);
-  assert.equal(m.positions.length, 6 * 3); // 6 vertices (2 colunas x 3 linhas)
+  assert.equal(m.positions.length, 9 * 3); // 9 vertices (os cantos dos 4 quads)
 });
 
 test('tintForHeight: oceano e azul, terra alta e clara', () => {

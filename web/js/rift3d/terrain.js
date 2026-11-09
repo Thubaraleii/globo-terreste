@@ -55,15 +55,15 @@ export function tintForHeight(h) {
   return [...STOPS[0][1]];
 }
 
-// Malha de uma placa: so celulas da placa com altura valida; quad vira 2 triangulos se os 4 cantos servem.
+// Malha de uma placa: quads cujo canto noroeste e da placa e tem altura; 2 triangulos por quad.
 // Raio do vertice = 1 + exag * h / 6371000 (Terra = 1); posicoes no mapeamento de geoToXYZ.
 export function buildPlateMesh(grid, plateId, exag) {
   const { meta, heights, plates } = grid;
   const { width: w, height: h } = meta;
-  const valid = (i, j) => {
-    const k = j * w + i;
-    return plates[k] === plateId && heights[k] !== meta.nodata;
-  };
+  // O quad pertence a placa do seu canto noroeste; os 4 cantos precisam de altura. Assim, em 0 Ma as placas
+  // vizinhas se encaixam sem vao (um vao pareceria uma linha geologica).
+  const hasHeight = (i, j) => heights[j * w + i] !== meta.nodata;
+  const valid = (i, j) => plates[j * w + i] === plateId && hasHeight(i, j);
   const vertexOf = new Int32Array(w * h).fill(-1);
   const positions = [];
   const colors = [];
@@ -80,7 +80,7 @@ export function buildPlateMesh(grid, plateId, exag) {
   };
   for (let j = 0; j < h - 1; j++) {
     for (let i = 0; i < w - 1; i++) {
-      if (!(valid(i, j) && valid(i + 1, j) && valid(i, j + 1) && valid(i + 1, j + 1))) continue;
+      if (!(valid(i, j) && hasHeight(i + 1, j) && hasHeight(i, j + 1) && hasHeight(i + 1, j + 1))) continue;
       const a = vertex(i, j);
       const b = vertex(i + 1, j);
       const c = vertex(i, j + 1);
