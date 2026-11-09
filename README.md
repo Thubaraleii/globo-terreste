@@ -121,6 +121,11 @@ Barra "Linhas de costa antigas" na base do globo: deslizante de idade (passos de
   fonte é recusada) e os gira (`python -m pipeline.paleo_lineaments`). Cada lineamento gira como corpo rígido pela placa
   do ponto médio; se as pontas caem em placas diferentes do modelo, ele é marcado (`plates_differ`). Nada é desenhado
   por nós. Caixa "Lineamentos estruturais…" aparece quando há quadros `lineaments_<idade>.geojson`.
+- **Lineamentos do Brasil (SGB/CPRM, local):** `scripts/fetch_sgb_structures.py` baixa as 32.323 estruturas do SIG
+  *Geologia, Tectônica e Recursos Minerais do Brasil* (2004, 1:1.000.000; servidor ArcGIS do SGB, sem licença declarada, uso de
+  pesquisa com citação). `scripts/make_sgb_lineaments.py` seleciona **falhas e zonas de cisalhamento** de segmento
+  ≥ 50 km (sem fraturas e sem traços de foliação) — critério nosso, não interpretação: 1.328 segmentos. Os arquivos
+  derivados ficam **fora do git**. **A África ainda não tem fonte:** sem o outro lado, não há como "ligar" as duas costas.
 - **Botão "Girar globo":** rotação automática (liga/desliga); arrastar, rolar ou tocar no mapa a desliga.
 - **Limites:** é uma reconstrução interpretativa. Zonas, placas e amostras continuam nas
   posições atuais (não são girados ainda). O Scotese/PALEOMAP (usado pelo dinosaurpictures.org) não foi
