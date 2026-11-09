@@ -21,7 +21,7 @@ class _Rot:
 class FakeModel:
     """get_rotation(age, plate, from_time, fixed_plate_id): identidade em 0 Ma e na placa fixa."""
 
-    def get_rotation(self, age, plate, from_time=0.0, fixed_plate_id=0):
+    def get_rotation(self, age, plate, from_time=0.0, fixed_plate_id=0, use_identity_for_missing_plate_ids=True):
         if age == 0 or plate == fixed_plate_id:
             return _Rot(0.0, 0.0, 0.0)
         return _Rot(45.0, -30.0, float(age) / 2)
@@ -33,6 +33,36 @@ def test_rotation_table_fixed_plate_is_identity_and_has_all_ages():
     assert all(r["angle_deg"] == 0.0 for r in t["701"])
     assert t["201"][0]["angle_deg"] == 0.0  # 0 Ma e identidade
     assert t["201"][2] == {"age": 10, "pole_lat": 45.0, "pole_lon": -30.0, "angle_deg": 5.0}
+
+
+class MissingPlateModel(FakeModel):
+    """Imita pygplates: placa 999 nao existe no .rot; por padrao vira identidade (isso seria inventar)."""
+
+    def get_rotation(self, age, plate, from_time=0.0, fixed_plate_id=0, use_identity_for_missing_plate_ids=True):
+        if plate == 999:
+            return _Rot(0.0, 0.0, 0.0) if use_identity_for_missing_plate_ids else None
+        return super().get_rotation(age, plate, from_time, fixed_plate_id)
+
+
+def test_rotation_table_omits_plate_missing_from_the_model():
+    t = rift3d.rotation_table(MissingPlateModel(), [201, 999], 701, [0, 5])
+    assert "999" not in t          # nao vira "gira com a Africa" em silencio
+    assert [r["age"] for r in t["201"]] == [0, 5]
+
+
+def test_build_records_omitted_plates_in_index(tmp_path, monkeypatch):
+    monkeypatch.setattr(rift3d, "fetch_mosaic",
+                        lambda z, x0, x1, y0, y1, cache_dir: np.zeros(((y1 - y0 + 1) * 256, (x1 - x0 + 1) * 256), np.float32))
+    monkeypatch.setattr(rift3d, "static_polygons_in_bbox",
+                        lambda: [(201, box(-60, -40, -30, -20)), (701, box(5, -40, 35, -20))])
+    paleo_dir = tmp_path / "paleo"
+    paleo_dir.mkdir()
+    (paleo_dir / "lineaments_0.geojson").write_text(json.dumps(
+        {"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"plate_id": 999}, "geometry": None}]}))
+    rift3d.build(out_dir=tmp_path / "out", cache_dir=tmp_path / "c", rm=MissingPlateModel(), paleo_dir=paleo_dir)
+    out = tmp_path / "out"
+    assert "999" not in json.loads((out / "rotations.json").read_text())
+    assert json.loads((out / "index.json").read_text())["omitted_plates"] == [999]
 
 
 def test_rotation_table_relative_matches_absolute_composition():

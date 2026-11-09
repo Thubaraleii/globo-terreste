@@ -149,13 +149,18 @@ def rotation_table(rm, plate_ids: list[int], fixed: int, ages: list[int]) -> dic
     for pid in plate_ids:
         rows = []
         for age in ages:
-            rot = rm.get_rotation(float(age), pid, 0.0, fixed_plate_id=fixed)
+            # sem isso o pygplates trata placa ausente do .rot como identidade (gira com a placa fixa): inventado
+            rot = rm.get_rotation(float(age), pid, 0.0, fixed_plate_id=fixed, use_identity_for_missing_plate_ids=False)
+            if rot is None:
+                rows = []
+                break
             if rot.represents_identity_rotation():
                 lat, lon, ang = 0.0, 0.0, 0.0
             else:
                 lat, lon, ang = rot.get_lat_lon_euler_pole_and_angle_degrees()
             rows.append({"age": age, "pole_lat": round(lat, 6), "pole_lon": round(lon, 6), "angle_deg": round(ang, 6)})
-        table[str(pid)] = rows
+        if rows:
+            table[str(pid)] = rows
     return table
 
 
@@ -194,7 +199,9 @@ def build(out_dir: Path = OUT_DIR, cache_dir: Path = CACHE_DIR, rm=None, paleo_d
     fixed = choose_fixed(plates, lons)
     grid_plates = sorted(int(p) for p in np.unique(plates) if p != 0)
     ages_ma = paleo.ages()
-    table = rotation_table(rm, sorted(set(grid_plates) | _frame_plate_ids(paleo_dir)), fixed, ages_ma)
+    wanted = sorted(set(grid_plates) | _frame_plate_ids(paleo_dir))
+    table = rotation_table(rm, wanted, fixed, ages_ma)
+    omitted = [p for p in wanted if str(p) not in table]  # placas que o modelo de rotacao nao conhece
 
     out_dir.mkdir(parents=True, exist_ok=True)
     h, w = heights.shape
@@ -207,7 +214,7 @@ def build(out_dir: Path = OUT_DIR, cache_dir: Path = CACHE_DIR, rm=None, paleo_d
     (out_dir / "rotations.json").write_text(json.dumps(table, separators=(",", ":")), encoding="utf-8")
     (out_dir / "index.json").write_text(json.dumps({
         "model": paleo.MODEL, "terrain": TERRAIN_CREDIT, "ages_ma": ages_ma,
-        "generated": date.today().isoformat(), "layer": "rift3d",
+        "generated": date.today().isoformat(), "layer": "rift3d", "omitted_plates": omitted,
     }, indent=2, ensure_ascii=False), encoding="utf-8")
     return {"width": w, "height": h, "fixed_plate": fixed, "plates": grid_plates,
             "tiles": (x1 - x0 + 1) * (y1 - y0 + 1), "cells_with_plate": int((plates != 0).sum()),

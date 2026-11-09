@@ -1,6 +1,6 @@
 // Liga dados, cena e controles da vista 3D (rift3d.html).
 import { createScene, addPlateMeshes } from './scene.js';
-import { parseGrid } from './terrain.js';
+import { loadRift3d } from './load.js';
 import { quatAt } from './rotation.js';
 import { mountLayers } from './layers-mount.js';
 import { ageLabel } from '../paleo.js';
@@ -9,28 +9,14 @@ const BASE = 'data/rift3d/';
 const $ = (id) => document.getElementById(id);
 const status = (msg) => { $('status').textContent = msg; };
 
-async function getJSON(name) {
-  const res = await fetch(BASE + name);
-  if (!res.ok) throw new Error(`${name}: HTTP ${res.status}`);
-  return res.json();
-}
-
 async function load() {
-  let meta;
-  let rotations;
-  let index;
-  let buf;
   try {
-    [meta, rotations, index] = await Promise.all([getJSON('grid.json'), getJSON('rotations.json'), getJSON('index.json')]);
-    const res = await fetch(BASE + 'grid.bin');
-    if (!res.ok) throw new Error(`grid.bin: HTTP ${res.status}`);
-    buf = await res.arrayBuffer();
+    return await loadRift3d(fetch.bind(window), BASE);
   } catch (err) {
     console.warn(err);
-    status('Dados 3D ausentes. Gere com: python -m pipeline.rift3d');
+    status(err.message);
     return null;
   }
-  return { grid: parseGrid(meta, buf), rotations, index };
 }
 
 async function main() {
@@ -98,4 +84,7 @@ async function main() {
   requestAnimationFrame(tick);
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  status(`Erro ao montar a vista 3D: ${err.message}`);
+});
