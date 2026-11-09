@@ -108,6 +108,19 @@ Barra "Linhas de costa antigas" na base do globo: deslizante de idade (passos de
   essa placa estava na idade escolhida (`web/data/paleo/volcanoes_<idade>.geojson`). Os vulcões não
   existiam nessa idade: a posição mostra onde estava a crosta que hoje os sustenta. Pontos sem placa
   seriam omitidos (na geração atual: 0 de 1.214).
+- **Amostras na posição de formação (local):** `python -m pipeline.paleo_samples` lê a idade **numérica medida**
+  do GEOROC (`MIN. AGE`/`MAX. AGE`, ponto médio; períodos em texto como "CRETACEOUS" **não** viram número) e gira cada
+  amostra pela placa dela até o quadro de 5 Ma mais próximo. Entram só amostras com idade ≤ 152,5 Ma e
+  semi-intervalo ≤ 5 Ma (as demais são descartadas e contadas). Na geração atual: 17.375 amostras com idade
+  numérica, 8.808 giradas (130 Ma: 195; 135 Ma: 95). Os quadros `samples_<idade>.geojson` ficam **fora do git**
+  (GEOROC é CC BY-SA 4.0, atribuição + mesma licença; confirmar antes de publicar). Caixa "Amostras (GEOROC)…"
+  na barra, só aparece se os quadros existirem.
+- **Lineamentos estruturais (dados do pesquisador):** não achei conjunto aberto contínuo (Brasil + África) com
+  licença clara; o SGB/CPRM tem camadas no GeoSGB e o repositório RIGEO, mas sem licença explícita encontrada. Por isso o
+  pipeline aceita seus GeoJSON em `data/curated/lineaments/` (cada feição com `name` e `source` obrigatórios; feição sem
+  fonte é recusada) e os gira (`python -m pipeline.paleo_lineaments`). Cada lineamento gira como corpo rígido pela placa
+  do ponto médio; se as pontas caem em placas diferentes do modelo, ele é marcado (`plates_differ`). Nada é desenhado
+  por nós. Caixa "Lineamentos estruturais…" aparece quando há quadros `lineaments_<idade>.geojson`.
 - **Botão "Girar globo":** rotação automática (liga/desliga); arrastar, rolar ou tocar no mapa a desliga.
 - **Limites:** é uma reconstrução interpretativa. Zonas, placas e amostras continuam nas
   posições atuais (não são girados ainda). O Scotese/PALEOMAP (usado pelo dinosaurpictures.org) não foi

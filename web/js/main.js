@@ -3,7 +3,7 @@ import { createMap, setAppState, setDataAttribution } from './map.js';
 import { mountLayerPanel } from './layers.js';
 import { addDataLayers, applySampleFilter } from './datalayers.js';
 import {
-  renderSample, renderUnit, renderMacrostratUnit, renderVolcano, renderZone, renderPlateBoundary, indexSources, buildAttribution,
+  renderSample, renderUnit, renderMacrostratUnit, renderVolcano, renderZone, renderPlateBoundary, renderPaleoSample, renderPaleoLineament, indexSources, buildAttribution,
 } from './inspector.js';
 import { buildLabelSpecs, mountPlateLabels } from './platelabels.js';
 import { mountPaleo } from './paleo.js';
@@ -70,7 +70,10 @@ const probed = probeLocalOnly();
 probed.then(() => {
   addDataLayers(map, DATA_BASE, layerFailed, { skip: [...missingLayers] });
   // Paleogeografia (opcional: so aparece se data/paleo/index.json existir).
-  mountPaleo(map, DATA_BASE, document.getElementById('paleo-bar'));
+  mountPaleo(map, DATA_BASE, document.getElementById('paleo-bar'), {
+    onSelectSample: (p) => openDetails(() => renderPaleoSample(p, { source: sourceOf(p) })),
+    onSelectLineament: (p) => openDetails(() => renderPaleoLineament(p)),
+  });
 });
 
 // Painel recolhivel (em telas estreitas comeca fechado).

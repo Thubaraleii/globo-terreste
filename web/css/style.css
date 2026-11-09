@@ -370,3 +370,7 @@ html, body {
 .layer-filters { display: none; }
 .coords-readout:empty { display: none; }
 .layer-item[hidden] { display: none; }
+.paleo-samples-row { display: none; margin-top: 6px; font-size: 12px; }
+.paleo-bar.is-on .paleo-samples-row:not([hidden]) { display: block; }
+.paleo-samples-row input { accent-color: var(--accent); }
+.paleo-samples-row .paleo-credit { display: block; margin-top: 2px; }

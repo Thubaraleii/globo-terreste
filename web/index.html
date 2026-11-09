@@ -42,6 +42,13 @@
       <input id="paleo-slider" type="range" aria-label="Idade da reconstrução" aria-describedby="paleo-label">
       <output id="paleo-label" for="paleo-slider"></output>
     </div>
+    <div class="paleo-samples-row" hidden>
+      <label><input id="paleo-samples-toggle" type="checkbox"> Amostras (GEOROC) na posição de formação</label>
+      <span id="paleo-samples-count" class="paleo-credit" role="status"></span>
+    </div>
+    <div class="paleo-lineaments-row paleo-samples-row" hidden>
+      <label><input id="paleo-lineaments-toggle" type="checkbox"> Lineamentos estruturais (dados do pesquisador)</label>
+    </div>
     <p id="paleo-credit" class="paleo-credit"></p>
     <p id="paleo-status" class="warnings" role="status"></p>
   </section>

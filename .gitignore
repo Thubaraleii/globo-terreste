@@ -13,6 +13,8 @@ web/data/*
 !web/data/plate_labels.geojson
 !web/data/sources.json
 !web/data/paleo/
+# quadros de amostras (GEOROC): locais ate a licenca ser confirmada
+web/data/paleo/samples_*.geojson
 test-results/
 playwright-report/
 data/out/

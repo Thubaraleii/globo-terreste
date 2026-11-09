@@ -274,3 +274,46 @@ export function renderZone(props, opts = {}) {
     sourceSection(p.source_id, opts.source),
   ].join('');
 }
+
+// Amostra GEOROC na posicao de formacao (quadro de paleomapa). As propriedades vem dos quadros
+// `paleo/samples_<idade>.geojson` (pipeline/paleo_samples.py), nao do contrato do pipeline principal.
+export function renderPaleoSample(props, opts = {}) {
+  const p = props ?? {};
+  const basis = p.age_basis === 'range' ? 'Intervalo medido (ponto médio)' : p.age_basis === 'single' ? 'Valor único medido' : null;
+  return [
+    heading(missing(p.rock_name_original) ? 'Amostra' : `Amostra: ${esc(p.rock_name_original)}`),
+    list([
+      row('Rocha (nome original)', show(p.rock_name_original)),
+      row('Classe', showLabel(ROCK_LABELS, p.rock_class)),
+      row('Idade', missing(p.age_ma) ? NAO_INFORMADO : `${esc(p.age_ma)} Ma${missing(p.age_unc_ma) ? '' : ` ± ${esc(p.age_unc_ma)}`}`),
+      row('Base da idade', show(basis)),
+      row('Posição atual', missing(p.present_lat) ? NAO_INFORMADO : `${esc(p.present_lat)}°, ${esc(p.present_lon)}°`),
+      row('Placa (modelo)', show(p.plate_id)),
+      row('ID', show(p.id)),
+    ]),
+    `<p class="details-note">Posição reconstruída: onde a placa estava na idade da amostra, segundo o modelo (interpretação, não observação).</p>`,
+    sourceSection(p.source_id, opts.source),
+  ].join('');
+}
+
+// Lineamento estrutural girado (dados fornecidos pelo pesquisador; pipeline/paleo_lineaments.py).
+export function renderPaleoLineament(props) {
+  const p = props ?? {};
+  const src = typeof p.source === 'string' && /^https?:\/\//i.test(p.source.trim())
+    ? renderSourceLink(p.source.trim()) : show(p.source);
+  return [
+    heading(missing(p.name) ? 'Lineamento' : `Lineamento: ${esc(p.name)}`),
+    list([
+      row('Nome', show(p.name)),
+      row('Tipo', show(p.kind)),
+      row('Idade reportada (Ma)', show(p.age_ma_reported)),
+      row('Quadro (Ma)', show(p.paleo_age_ma)),
+      row('Placa (modelo)', show(p.plate_id)),
+      row('Fonte', src),
+    ]),
+    p.plates_differ === true || p.plates_differ === 'true'
+      ? '<p class="details-note">Atenção: as pontas deste lineamento caem em placas diferentes do modelo; ele foi girado como um corpo só, pela placa do ponto médio.</p>'
+      : '',
+    '<p class="details-note">Posição reconstruída pelo modelo de placas (interpretação, não observação).</p>',
+  ].join('');
+}
