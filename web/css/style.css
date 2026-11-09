@@ -312,3 +312,41 @@ html, body {
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 0.7);
 }
 .plate-label.is-off { display: none; }
+
+/* Paleogeografia: barra de tempo na base do globo. */
+.paleo-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 96px; /* acima da linha de atribuicao */
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 2 * var(--gutter)));
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 13px;
+  z-index: 3;
+}
+.paleo-bar[hidden] { display: none; }
+.paleo-head { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+.paleo-head input { width: 18px; height: 18px; accent-color: var(--accent); }
+.paleo-controls { display: none; align-items: center; gap: 10px; margin-top: 8px; }
+.paleo-bar.is-on .paleo-controls { display: flex; }
+.paleo-controls button {
+  flex: none;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  cursor: pointer;
+}
+.paleo-controls input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.paleo-controls output { flex: none; min-width: 9.5em; text-align: right; }
+.paleo-credit { margin: 6px 0 0; font-size: 11px; color: var(--text-muted); }
+@media (max-width: 719px) {
+  .paleo-bar { bottom: 56px; }
+}

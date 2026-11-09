@@ -94,6 +94,20 @@ A camada **Geologia (Macrostrat)** (`macrostrat`, desligada por padrão) é a al
 
 **GLiM**: a camada **Unidades GLiM (uso local)** (`geo_units`) só é usada localmente, porque o GLiM não declara licença; **não publique** `geo_units.pmtiles`. Sem o arquivo o globo funciona e o painel mostra o aviso de camada indisponível. Pedir permissão aos autores do GLiM continua sendo uma opção para publicá-lo.
 
+## Paleomapas (linhas de costa de 0 a 150 Ma)
+
+Barra "Linhas de costa antigas" na base do globo: deslizante de idade (passos de 5 Ma) e botão Animar.
+
+- **Fonte:** Merdith et al. (2021), *Extending full-plate tectonic models into deep time*, Earth-Science
+  Reviews 214, 103477 — modelo v1.2.4, Zenodo 10.5281/zenodo.13635864, licença **CC BY 4.0**.
+  Usamos o arquivo de rotações e as linhas de costa do próprio modelo; nada é inferido por nós.
+- **Gerar:** baixe `Merdith_etal_2021_ESR_v1.2.4.zip` do Zenodo, extraia em `data/raw/paleo/merdith/`
+  (ignorado pelo git) e rode `python pipeline/paleo.py` (requer `pygplates`). Saída em `web/data/paleo/`
+  (~2 MB por idade, carregada sob demanda; ignorada pelo git).
+- **Limites:** é uma reconstrução interpretativa. Vulcões, zonas, placas e amostras continuam nas
+  posições atuais (não são girados ainda). O Scotese/PALEOMAP (usado pelo dinosaurpictures.org) não foi
+  incluído por ter licença de uso menos clara.
+
 ## Rodar o globo localmente
 
 ```

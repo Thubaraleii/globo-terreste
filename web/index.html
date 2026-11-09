@@ -33,6 +33,17 @@
     <p id="search-status" class="search-status" role="status"></p>
   </div>
 
+  <section id="paleo-bar" class="paleo-bar" aria-label="Paleogeografia" hidden>
+    <label class="paleo-head"><input id="paleo-toggle" type="checkbox"> Linhas de costa antigas (0–150 Ma)</label>
+    <div class="paleo-controls">
+      <button id="paleo-play" type="button" aria-pressed="false">▶ Animar</button>
+      <input id="paleo-slider" type="range" aria-label="Idade da reconstrução" aria-describedby="paleo-label">
+      <output id="paleo-label" for="paleo-slider"></output>
+    </div>
+    <p id="paleo-credit" class="paleo-credit"></p>
+    <p id="paleo-status" class="warnings" role="status"></p>
+  </section>
+
   <section id="details-panel" class="details-panel" role="region" aria-label="Detalhes do item selecionado" hidden>
     <button type="button" class="details-close icon-btn" aria-label="Fechar detalhes">✕</button>
     <div class="details-body"></div>

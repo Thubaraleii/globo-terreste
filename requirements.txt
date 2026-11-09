@@ -4,3 +4,4 @@ pyproj==3.7.2
 pyogrio==0.13.0
 requests==2.34.2
 pytest==9.2.0
+pygplates==1.0.0  # so para pipeline/paleo.py (paleomapas)

@@ -6,6 +6,7 @@ import {
   renderSample, renderUnit, renderMacrostratUnit, renderVolcano, renderZone, renderPlateBoundary, indexSources, buildAttribution,
 } from './inspector.js';
 import { buildLabelSpecs, mountPlateLabels } from './platelabels.js';
+import { mountPaleo } from './paleo.js';
 import { parseCoords, searchIndex, buildSearchItems } from './search.js';
 
 // Pasta dos dados (relativa a pagina); sem sobrescrita por URL.
@@ -44,6 +45,8 @@ function layerFailed(layerId, err) {
 
 applySampleFilter(map, state.filters);
 addDataLayers(map, DATA_BASE, layerFailed);
+// Paleogeografia (opcional: so aparece se data/paleo/index.json existir).
+mountPaleo(map, DATA_BASE, document.getElementById('paleo-bar'));
 
 // Painel recolhivel (em telas estreitas comeca fechado).
 const panel = document.getElementById('layer-panel');
