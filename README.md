@@ -113,6 +113,21 @@ Barra "Linhas de costa antigas" na base do globo: deslizante de idade (passos de
   posições atuais (não são girados ainda). O Scotese/PALEOMAP (usado pelo dinosaurpictures.org) não foi
   incluído por ter licença de uso menos clara.
 
+## Publicação no GitHub Pages
+
+O Pages serve a raiz da `main`; `index.html` na raiz redireciona para `web/`.
+Vão no repositório (via exceções no `.gitignore`) só os dados de `web/data/` que podem ser publicados:
+vulcões (GVP), zonas tectônicas (USGS + PB2002), limites e nomes de placas (PB2002) e os paleomapas
+(Merdith 2021). **Não** vão `samples.pmtiles` (GEOROC) nem `geo_units.pmtiles` (GLiM): sem esses arquivos
+o globo esconde as camadas "Amostras" e "Unidades GLiM" e tira GEOROC/GLiM da atribuição, sem erros.
+Localmente, com os arquivos presentes, tudo aparece como antes.
+
+- **GVP:** os termos do Smithsonian convidam ao uso educacional e não comercial, com citação; não é
+  licença aberta. Não use o site publicado de forma comercial sem consultar o GVP (gvp@si.edu).
+- **Mapas de fundo e Macrostrat:** continuam sendo pedidos direto do navegador de quem abre o site
+  (o IP fica visível para esses provedores) — ver "Mapas de fundo".
+- **Testes e2e:** o e2e recusa rodar com dados reais em `web/data`; mova a pasta antes (ver `tests/e2e`).
+
 ## Rodar o globo localmente
 
 ```

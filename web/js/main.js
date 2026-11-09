@@ -45,10 +45,33 @@ function layerFailed(layerId, err) {
 }
 
 applySampleFilter(map, state.filters);
-addDataLayers(map, DATA_BASE, layerFailed);
 mountSpin(map, document.getElementById('spin-toggle'));
-// Paleogeografia (opcional: so aparece se data/paleo/index.json existir).
-mountPaleo(map, DATA_BASE, document.getElementById('paleo-bar'));
+
+// Camadas que dependem de arquivos so locais (nao publicados por licenca): se o arquivo
+// nao existe, a camada some do painel e nao e criada (sem erros 404 nem avisos).
+const LOCAL_ONLY = { samples: 'samples.pmtiles', geo_units: 'geo_units.pmtiles' };
+const missingLayers = new Set();
+
+async function probeLocalOnly() {
+  await Promise.all(Object.entries(LOCAL_ONLY).map(async ([layer, file]) => {
+    try {
+      const res = await fetch(`${DATA_BASE}${file}`, { method: 'HEAD' });
+      if (!res.ok) missingLayers.add(layer);
+    } catch {
+      missingLayers.add(layer);
+    }
+  }));
+  for (const id of missingLayers) {
+    document.querySelector(`[data-layer-id="${id}"]`)?.setAttribute('hidden', '');
+  }
+}
+
+const probed = probeLocalOnly();
+probed.then(() => {
+  addDataLayers(map, DATA_BASE, layerFailed, { skip: [...missingLayers] });
+  // Paleogeografia (opcional: so aparece se data/paleo/index.json existir).
+  mountPaleo(map, DATA_BASE, document.getElementById('paleo-bar'));
+});
 
 // Painel recolhivel (em telas estreitas comeca fechado).
 const panel = document.getElementById('layer-panel');
@@ -115,8 +138,13 @@ function closeDetails() {
 
 details.querySelector('.details-close').addEventListener('click', closeDetails);
 
-fetchJson('sources.json')
-  .then((list) => {
+// Fontes de camadas ausentes (GEOROC das amostras, GLiM das unidades) nao entram na atribuicao.
+const hiddenSource = (id) => (missingLayers.has('samples') && String(id).startsWith('georoc'))
+  || (missingLayers.has('geo_units') && id === 'glim');
+
+Promise.all([fetchJson('sources.json'), probed])
+  .then(([all]) => {
+    const list = Array.isArray(all) ? all.filter((s) => !hiddenSource(s?.source_id)) : all;
     sources = indexSources(list);
     layerPanel.setSources(list);
     setDataAttribution(map, buildAttribution(list));

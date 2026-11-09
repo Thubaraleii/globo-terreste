@@ -37,6 +37,22 @@ def _ring(points) -> list[list[float]]:
     return ring
 
 
+SIMPLIFY_DEG = 0.05  # ~5 km: invisivel na escala do globo, reduz ~50% o tamanho
+
+
+def _simplify(ring: list[list[float]]) -> list[list[float]] | None:
+    """Douglas-Peucker leve (preserva topologia); None se o anel colapsar."""
+    from shapely.geometry import Polygon
+
+    poly = Polygon(ring)
+    if not poly.is_valid:
+        return ring  # nao arrisca alterar uma geometria que ja vem estranha do modelo
+    s = poly.simplify(SIMPLIFY_DEG, preserve_topology=True)
+    if s.is_empty or s.geom_type != "Polygon" or len(s.exterior.coords) < 4:
+        return ring
+    return [[round(x, 2), round(y, 2)] for x, y in s.exterior.coords]
+
+
 def reconstruct_age(rotation_model, age: float) -> dict:
     import pygplates as g
 
@@ -53,10 +69,13 @@ def reconstruct_age(rotation_model, age: float) -> dict:
             pts = poly.get_exterior_points()
             if len(pts) < 3:
                 continue
+            ring = _simplify(_ring(pts))
+            if ring is None:
+                continue
             feats.append({
                 "type": "Feature",
                 "properties": {"name": feature.get_name() or None, "age_ma": age},
-                "geometry": {"type": "Polygon", "coordinates": [_ring(pts)]},
+                "geometry": {"type": "Polygon", "coordinates": [ring]},
             })
     return {"type": "FeatureCollection", "features": feats}
 

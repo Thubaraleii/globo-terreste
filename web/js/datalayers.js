@@ -58,8 +58,12 @@ export function fillLegends(root = document) {
 
 // Adiciona fontes e camadas. `base` e a pasta dos dados (relativa a pagina).
 // `onError(layerId, err)` e chamado uma vez por camada que nao carregar; as demais seguem.
-export function addDataLayers(map, base, onError) {
+// `opts.skip`: ids de camadas logicas que nao devem ser criadas (sem os dados publicados).
+const isSkipped = (id, skip) => skip.some((s) => id === s || id.startsWith(`${s}:`));
+
+export function addDataLayers(map, base, onError, opts = {}) {
   registerPmtiles();
+  const skip = opts.skip ?? [];
   const absBase = new URL(base, document.baseURI).href;
   const failed = new Set();
 
@@ -72,13 +76,15 @@ export function addDataLayers(map, base, onError) {
 
   const add = () => {
     for (const [id, spec] of Object.entries(buildSources(absBase))) {
-      if (!map.getSource(id)) map.addSource(id, spec);
+      if (!isSkipped(id, skip) && !map.getSource(id)) map.addSource(id, spec);
     }
     for (const layer of buildLayers(sampleFilters.get(map) ?? null)) {
-      if (!map.getLayer(layer.id)) map.addLayer(layer);
+      if (!isSkipped(layer.id, skip) && !map.getLayer(layer.id)) map.addLayer(layer);
     }
     fillLegends();
   };
-  if (map.isStyleLoaded()) add();
+  // getStyle() so existe depois do 'style.load' (isStyleLoaded() tambem fica falso enquanto
+  // tiles carregam, e o evento ja teria passado se a chamada for assincrona)
+  if (map.getStyle()) add();
   else map.once('style.load', add);
 }

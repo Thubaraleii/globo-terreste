@@ -5,7 +5,14 @@ __pycache__/
 node_modules/
 .claude/
 .superpowers/
-web/data/
+web/data/*
+# publicados no Pages (licencas abertas ou de uso nao comercial com citacao); GEOROC e GLiM ficam locais
+!web/data/volcanoes.geojson
+!web/data/tectonic_zones.geojson
+!web/data/plate_boundaries.geojson
+!web/data/plate_labels.geojson
+!web/data/sources.json
+!web/data/paleo/
 test-results/
 playwright-report/
 data/out/

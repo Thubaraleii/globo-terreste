@@ -1,0 +1,362 @@
+[
+  {
+    "source_id": "gvp",
+    "institution": "Smithsonian Institution, Global Volcanism Program",
+    "source_url": "https://volcano.si.edu/",
+    "license": "Termos de uso próprios do GVP (ver volcano.si.edu); citação obrigatória",
+    "attribution": "Global Volcanism Program, Volcanoes of the World, Smithsonian Institution (dados do WFS baixados em 2026-11-03)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "tectonics",
+    "institution": "USGS (catálogo ComCat) e P. Bird (PB2002)",
+    "source_url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=csv&starttime=1900-01-01&endtime=2026-11-03&minmagnitude=6&orderby=time-asc",
+    "license": "USGS: domínio público (verificar termos); PB2002: Open Data Commons Attribution 1.0",
+    "attribution": "Bird, P. (2003) An updated digital model of plate boundaries, G-cubed 4(3), 1027, doi:10.1029/2001GC000252; U.S. Geological Survey, Earthquake Catalog. PB2002 em GeoJSON (limites e nomes das placas, boundaries.json e plates.json): https://github.com/fraxen/tectonicplates",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "pb2002",
+    "institution": "P. Bird (PB2002); dados em GeoJSON de fraxen/tectonicplates",
+    "source_url": "https://github.com/fraxen/tectonicplates",
+    "license": "Open Data Commons Attribution 1.0",
+    "attribution": "Bird, P. (2003) An updated digital model of plate boundaries, G-cubed 4(3), 1027, doi:10.1029/2001GC000252; GeoJSON: https://github.com/fraxen/tectonicplates",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "pb2002_plates",
+    "institution": "P. Bird (PB2002); dados em GeoJSON de fraxen/tectonicplates",
+    "source_url": "https://github.com/fraxen/tectonicplates",
+    "license": "Open Data Commons Attribution 1.0",
+    "attribution": "Bird, P. (2003) An updated digital model of plate boundaries, G-cubed 4(3), 1027, doi:10.1029/2001GC000252; GeoJSON: https://github.com/fraxen/tectonicplates",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_ALKALI_BASALT_part1",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_ALKALI_BASALT_part2",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_ANKARAMITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_BASALT_part1",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_BASALT_part2",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_BASALT_part3",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_BASALT_part4",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_BASALT_part5",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_BASALT_part6",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_BASALT_part7",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_BASALT_part8",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_BASALT_part9",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_BASANITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_CALC-ALKALI_BASALT",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_CLINOPYROXENITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_DOLERITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_DUNITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_GABBRO_part1",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_GABBRO_part2",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_GABBRONORITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_HARZBURGITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_KOMATIITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_LHERZOLITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_NORITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_ORTHOPYROXENITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_PERIDOTITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_PICROBASALT",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_PYROXENITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_SUBALKALI_BASALT",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_THOLEIITIC_BASALT_part1",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_THOLEIITIC_BASALT_part2",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_TRACHYBASALT",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_TRANSITIONAL_BASALT",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_WEBSTERITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "georoc:2026-09-2JETOA_WEHRLITE",
+    "institution": "GEOROC (Georg-August-Universität Göttingen)",
+    "source_url": "https://georoc.eu/",
+    "license": "CC BY-SA 4.0 (uso científico e educacional); citar o conjunto de dados (DOI 10.25625/2JETOA, v15) e as referências originais",
+    "attribution": "GEOROC Rocks dataset DOI 10.25625/2JETOA, v15 (2026-09)",
+    "acquisition_date": "2026-11-03",
+    "original_scale": null
+  },
+  {
+    "source_id": "glim",
+    "institution": "Universität Hamburg (Hartmann & Moosdorf)",
+    "source_url": "https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glim.html",
+    "license": "NÃO declarada na fonte — uso local; não publicar sem confirmar a licença",
+    "attribution": "Hartmann, J. & Moosdorf, N. (2012) The new global lithological map database GLiM, G-cubed 13, Q12004, doi:10.1029/2012GC004370",
+    "acquisition_date": "2026-11-03",
+    "original_scale": "~1:3.750.000 (média; 92 mapas regionais)"
+  }
+]

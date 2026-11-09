@@ -369,3 +369,4 @@ html, body {
 /* Filtros das amostras ocultos no painel (a logica continua no codigo; remova esta regra para voltar). */
 .layer-filters { display: none; }
 .coords-readout:empty { display: none; }
+.layer-item[hidden] { display: none; }
