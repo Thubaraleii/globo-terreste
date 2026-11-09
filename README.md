@@ -139,6 +139,50 @@ Barra "Linhas de costa antigas" na base do globo: deslizante de idade (passos de
   posições atuais (não são girados ainda). O Scotese/PALEOMAP (usado pelo dinosaurpictures.org) não foi
   incluído por ter licença de uso menos clara.
 
+## Vista 3D da abertura do Atlântico Sul (`rift3d.html`)
+
+Página 3D interativa (Three.js) da faixa de 20°S a 40°S, da costa sul do Brasil à costa sul da África, com
+relevo e batimetria **atuais** movidos como blocos rígidos pelo modelo de placas (Merdith et al. 2021,
+CC BY 4.0), de 150 Ma até hoje. A África (placa fixa escolhida automaticamente) fica parada e a América
+do Sul se move. Abra `http://127.0.0.1:8766/rift3d.html` (`npm run serve`) ou use o link "Vista 3D" do globo.
+
+Gerar os dados (precisa do modelo em `data/raw/paleo/merdith`, como nos paleomapas; baixa 30 tiles do AWS
+Terrain Tiles):
+
+```bash
+.\.venv\Scripts\python.exe -m pipeline.rift3d
+```
+
+Saída em `web/data/rift3d/` (`grid.bin`, `grid.json`, `rotations.json`, `index.json`), **git-ignorada** até a
+licença do relevo ser confirmada (AWS Terrain Tiles junta SRTM, GEBCO, ETOPO1 e outras fontes). Sem esses
+arquivos a página mostra a mensagem de dados ausentes.
+
+Lineamentos e vulcões entram como camadas presas à placa de cada feição (posições atuais de
+`web/data/paleo/lineaments_0.geojson` e `volcanoes_0.geojson`); sem esses arquivos a caixa some. **Para usar
+lineamentos próprios**: coloque GeoJSON (`LineString`/`MultiLineString`, lon/lat, com `properties.name` e
+`properties.source` obrigatórios) em `data/curated/lineaments/` e rode, nesta ordem:
+
+```bash
+.\.venv\Scripts\python.exe -m pipeline.paleo_lineaments
+.\.venv\Scripts\python.exe -m pipeline.rift3d
+```
+
+(o segundo passo inclui na tabela de rotações as placas dos lineamentos novos; feição cuja placa não está
+na tabela é omitida, e a página avisa quantas). Clicar numa linha ou vulcão mostra nome e fonte.
+
+Limites, para ler os resultados com cuidado:
+- o relevo é o atual, só movido: não é paleotopografia nem reconstrução do relevo antigo;
+- os polígonos estáticos do modelo cobrem também o fundo oceânico, mas ele não existia nas idades antigas:
+  células mais fundas que −2500 m ficam sem placa (corte de exibição, gravado em `grid.json`), restando
+  plataforma e talude superior;
+- as margens atuais se sobrepõem perto de 150 Ma (as duas margens estiradas voltam a se encostar): é o que o
+  modelo e o relevo atual dão, não um erro de desenho;
+- a África está dividida em várias placas no modelo (701, 77030 e outras): blocos vizinhos podem se
+  sobrepor ou deixar vãos em idades antigas;
+- a grade é de 0,05° (cerca de 5 km): serve para ver, não para medir; o exagero vertical (10 a 80×) muda só
+  a aparência;
+- as amostras GEOROC ainda não entram na vista 3D (a posição delas depende da idade de cada uma).
+
 ## Publicação no GitHub Pages
 
 O Pages serve a raiz da `main`; `index.html` na raiz redireciona para `web/`.

@@ -374,3 +374,5 @@ html, body {
 .paleo-bar.is-on .paleo-samples-row:not([hidden]) { display: block; }
 .paleo-samples-row input { accent-color: var(--accent); }
 .paleo-samples-row .paleo-credit { display: block; margin-top: 2px; }
+.rift-link { margin: 10px 0 0; font-size: 13px; }
+.rift-link a { color: var(--accent); }
